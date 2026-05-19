@@ -1,0 +1,66 @@
+---
+// src/components/Footer.astro
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="w-full bg-neutral-950 text-white pt-20 pb-12 border-t border-neutral-900 font-body">
+  <div class="container mx-auto px-6">
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-y-12 gap-x-8 pb-16 border-b border-neutral-900">
+      
+      <div class="flex flex-col space-y-4">
+        <h3 class="font-heading text-xl tracking-[0.15em] uppercase">VK MEN</h3>
+        <p class="text-[11px] tracking-widest text-neutral-400 uppercase leading-relaxed">
+          Urban luxury and essential pieces for the modern man. Crafted for character.
+        </p>
+      </div>
+
+      <div class="flex flex-col space-y-3">
+        <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">Customer Care</h4>
+        <ul class="space-y-2 text-[11px] uppercase tracking-[0.15em] text-neutral-300">
+          <li><a href="/envios" class="hover:text-white transition opacity-80 hover:opacity-100">Envíos & Deliveries</a></li>
+          <li><a href="/cambios" class="hover:text-white transition opacity-80 hover:opacity-100">Políticas de Cambios</a></li>
+          <li><a href="/contacto" class="hover:text-white transition opacity-80 hover:opacity-100">Términos del Servicio</a></li>
+        </ul>
+      </div>
+
+      <div class="flex flex-col space-y-3">
+        <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">Collections</h4>
+        <ul class="space-y-2 text-[11px] uppercase tracking-[0.15em] text-neutral-300">
+          <li><a href="/nueva-coleccion" class="hover:text-white transition opacity-80 hover:opacity-100">New Arrivals</a></li>
+          <li><a href="/polos" class="hover:text-white transition opacity-80 hover:opacity-100">Polos Essentials</a></li>
+          <li><a href="/pantalones" class="hover:text-white transition opacity-80 hover:opacity-100">Old Money Pants</a></li>
+        </ul>
+      </div>
+
+      <div class="flex flex-col space-y-3">
+        <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">Connect</h4>
+        <ul class="space-y-2 text-[11px] uppercase tracking-[0.15em] text-neutral-300">
+          <li>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center space-x-2">
+              <span>Instagram</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me" target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center space-x-2">
+              <span>WhatsApp Business</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-center pt-8 text-[10px] uppercase tracking-[0.2em] text-neutral-500 gap-y-4 text-center md:text-left">
+      <div>
+        &copy; {currentYear} VKMEN CLOTHING STORE. ALL RIGHTS RESERVED.
+      </div>
+      <div class="flex space-x-6">
+        <span>Caracas, VE</span>
+        <span class="opacity-40">•</span>
+        <span>Designed with Code</span>
+      </div>
+    </div>
+
+  </div>
+</footer>

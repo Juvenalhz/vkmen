@@ -1,0 +1,84 @@
+---
+// src/components/Hero.astro
+import { Image } from 'astro:assets';
+// REEMPLAZA ESTO CON TU FOTO PRINCIPAL
+import heroImage from '../assets/NOPE-VINO_02.png'; 
+---
+
+<section id="hero" class="relative min-h-screen w-full overflow-hidden bg-black flex items-end pb-24 md:pb-32">
+  
+  <div class="absolute inset-0 z-0 h-full w-full">
+    <Image 
+      src={heroImage} 
+      alt="VKMEN Colección Caracas Urbano" 
+      class="h-full w-full object-cover object-center"
+      quality={100}
+      format="webp"
+    />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/70 z-10"></div>
+  </div>
+
+  <div class="container mx-auto px-6 relative z-20 text-white">
+    <div class="max-w-4xl" id="hero-content">
+      
+      <p class="font-body text-[11px] uppercase tracking-[0.4em] opacity-80 mb-4" id="hero-sub">
+        Urban Luxury • Caracas Collection
+      </p>
+
+      <h1 class="font-heading text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" id="hero-title">
+        The Future is<br/>Modern.
+      </h1>
+
+      <div class="flex flex-col sm:flex-row gap-6 mt-12" id="hero-actions">
+        <a 
+          href="/nueva-coleccion" 
+          class="inline-block bg-white text-black font-body text-[12px] uppercase tracking-[0.3em] px-12 py-5 text-center transition-all duration-300 hover:bg-neutral-200 hover:scale-105"
+        >
+          Explore Collection
+        </a>
+        <a 
+          href="/proximamente" 
+          class="inline-block bg-black/40 border border-white/50 text-white font-body text-[12px] uppercase tracking-[0.3em] px-12 py-5 text-center transition-all duration-300 hover:bg-white/10"
+        >
+          Digital Catalog
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from "gsap";
+
+  // Esperar a que el DOM esté listo
+  window.addEventListener('DOMContentLoaded', () => {
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" }});
+
+    // Pequeña escala inicial en la imagen para efecto parallax o entrada
+    gsap.from("#hero img", {
+      scale: 1.1,
+      duration: 1.8,
+      ease: "power2.out"
+    });
+
+    // Entrada secuencial del contenido
+    tl.from("#hero-sub", { 
+      opacity: 0, 
+      y: 20, 
+      duration: 0.6, 
+      delay: 0.5 
+    })
+    .from("#hero-title", { 
+      opacity: 0, 
+      y: 40, 
+      duration: 0.8 
+    }, "-=0.4")
+    .from("#hero-actions a", { 
+      opacity: 0, 
+      y: 20, 
+      duration: 0.6, 
+      stagger: 0.2 
+    }, "-=0.4");
+  });
+</script>

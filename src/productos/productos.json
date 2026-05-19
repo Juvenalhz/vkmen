@@ -1,0 +1,22 @@
+[
+  {
+    "id": "chemise-fresh-01",
+    "nombre": "Chemise Fresh",
+    "precio": 28,
+    "categoria": "Camisas",
+    "descripcion": "Tela transpirable ideal para el clima de Caracas.",
+    "colores": [
+      {
+        "nombre": "Azul Marino",
+        "codigoHex": "#000080",
+        "fotos": ["/images/FRANELA-BLANCA_01.png"]
+      },
+      {
+        "nombre": "Blanco",
+        "codigoHex": "#FFFFFF",
+        "fotos": ["/images/NOPE-VINO_02.png"]
+      }
+    ],
+    "stock": true
+  }
+]

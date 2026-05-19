@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colores oficiales de tu Brandboard */
+  --color-vk-black: #000000;
+  --color-vk-gray: #738892;
+  --color-vk-light: #d0e4e4;
+
+  /* Tipografías oficiales */
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Avenir Light", sans-serif;
+}
+
+@layer base {
+  /* Importamos las fuentes de Google */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+  body {
+    @apply font-body bg-vk-black text-white antialiased;
+  }
+}

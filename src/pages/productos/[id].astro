@@ -1,0 +1,251 @@
+---
+// src/pages/productos/[id].astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import products from '../../data/products.json';
+import { Image } from 'astro:assets';
+
+export async function getStaticPaths() {
+  return products.map((product) => ({
+    params: { id: product.id },
+    props: { product },
+  }));
+}
+
+const { product } = Astro.props;
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/*.{jpeg,jpg,png,gif}');
+---
+
+<Layout title={`${product.name} | VKMEN`}>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  
+  <Header />
+
+  <main class="w-full bg-white pt-36 pb-24 font-body">
+    <div class="container mx-auto px-6 lg:px-12">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-12 items-start">
+        
+        <div class="lg:col-span-7 w-full lg:sticky lg:top-36 group lg:max-h-[75vh] relative select-none">
+          
+          <div class="swiper mySwiper lg:h-[75vh]">
+            <div class="swiper-wrapper" id="swiper-wrapper-dynamic">
+              </div>
+
+            <div class="swiper-button-prev !text-black !bg-white/90 !w-10 !h-10 !rounded-full after:!text-xs border border-neutral-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 max-md:opacity-100 max-md:!w-8 max-md:!h-8"></div>
+            <div class="swiper-button-next !text-black !bg-white/90 !w-10 !h-10 !rounded-full after:!text-xs border border-neutral-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 max-md:opacity-100 max-md:!w-8 max-md:!h-8"></div>
+            
+            <div class="swiper-pagination !-bottom-1"></div>
+          </div>
+
+          <div id="images-data" class="hidden" 
+               data-variants={JSON.stringify(
+                 await Promise.all(product.variants.map(async (v) => {
+                   const fImg = await images[v.imageFront]?.();
+                   const bImg = await images[v.imageBack]?.();
+                   return {
+                     color: v.colorName.toLowerCase(),
+                     front: fImg?.default.src,
+                     back: bImg?.default.src
+                   };
+                 }))
+               )}
+          ></div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col justify-between">
+          
+          <div class="border-b border-neutral-100 pb-10">
+            <p class="text-[10px] uppercase tracking-[0.25em] text-neutral-400 mb-3">{product.category}</p>
+            <h1 class="text-2xl uppercase tracking-[0.1em] text-neutral-900 font-medium mb-4 leading-tight">{product.name}</h1>
+            <p class="text-lg font-semibold text-neutral-900">${product.price} USD</p>
+            
+            <p class="text-[13px] text-neutral-600 leading-relaxed mt-8 lowercase first-letter:uppercase max-w-md">
+              Corte oversized premium confeccionado con textiles de alto gramaje. Diseñado para mantener la estructura y ofrecer máxima comodidad urbana. Hecho en Venezuela.
+            </p>
+          </div>
+
+          <div class="py-8 border-b border-neutral-100">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-[11px] uppercase tracking-[0.2em] text-neutral-400 font-bold">
+                Color: <span id="active-color-name" class="text-neutral-800 normal-case font-medium">{product.variants[0].colorName}</span>
+              </span>
+            </div>
+            <div class="flex space-x-4 items-center">
+              {product.variants.map((variant, index) => (
+                <button
+                  data-variant-toggle={variant.colorName.toLowerCase()}
+                  class="color-btn w-8 h-8 rounded-full p-[3px] border transition-all duration-300 hover:scale-110"
+                  title={variant.colorName}
+                  style={`border-color: ${index === 0 ? '#000000' : 'transparent'};`}
+                >
+                  <span class={`w-full h-full rounded-full block shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] ${
+                    variant.hex.toUpperCase() === '#FFFFFF' ? 'border border-neutral-200' : ''
+                  }`} style={`background-color: ${variant.hex};`} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div class="py-8 border-b border-neutral-100">
+            <div class="flex justify-between items-center mb-5">
+              <span class="text-[11px] uppercase tracking-[0.2em] text-neutral-400 font-bold">Select Size</span>
+              <span class="text-[10px] uppercase tracking-widest text-neutral-400 underline cursor-pointer">Sizing Guide</span>
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+              {['S', 'M', 'L', 'XL'].map((size) => (
+                <button class="size-btn border border-neutral-200 py-3.5 text-[12px] uppercase tracking-widest text-neutral-800 hover:border-black transition-colors font-medium">
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div class="pt-8 space-y-5">
+            <a 
+              id="whatsapp-btn"
+              href="#"
+              data-base-url={`https://wa.me/584124507289?text=Hola%20VKMEN,%20estoy%20interesado%20en%20la%20${encodeURIComponent(product.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full block bg-black text-white text-center py-5 text-[12px] uppercase tracking-[0.25em] font-medium hover:bg-neutral-800 transition-colors"
+            >
+              Adquirir Pieza via WhatsApp
+            </a>
+            
+            <div class="flex items-center justify-center space-x-2.5 text-[10px] uppercase tracking-widest text-neutral-400 pt-3">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Disponibilidad inmediata • envíos nacionales</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+  <script>
+    let swiperInstance: any = null;
+    
+    const imagesDataEl = document.getElementById('images-data');
+    const variantsData = imagesDataEl ? JSON.parse(imagesDataEl.getAttribute('data-variants') || '[]') : [];
+
+    let activeColor = variantsData[0]?.color || "";
+    let activeSize = "";
+
+    const wrapper = document.getElementById('swiper-wrapper-dynamic');
+    const colorButtons = document.querySelectorAll('[data-variant-toggle]');
+    const colorNameText = document.getElementById('active-color-name');
+    const sizeButtons = document.querySelectorAll('.size-btn');
+    const whatsappBtn = document.getElementById('whatsapp-btn') as HTMLAnchorElement;
+
+    // Inicializar o actualizar Swiper
+    function initSwiper() {
+      if (swiperInstance) {
+        swiperInstance.destroy(true, true);
+      }
+      
+      // @ts-ignore
+      swiperInstance = new Swiper('.mySwiper', {
+        loop: false,
+        speed: 500,
+        grabCursor: true, 
+        spaceBetween: 20,
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+      });
+    }
+
+    // Inyectar imágenes del color seleccionado
+    function loadVariantImages(colorName: string) {
+      if (!wrapper) return;
+      const variant = variantsData.find((v: any) => v.color === colorName);
+      if (!variant) return;
+
+      wrapper.innerHTML = `
+        <div class="swiper-slide !flex justify-center items-center bg-neutral-50 overflow-hidden h-full">
+          <img src="${variant.front}" alt="Front" class="max-w-full max-h-full object-contain pointer-events-none" />
+        </div>
+        <div class="swiper-slide !flex justify-center items-center bg-neutral-50 overflow-hidden h-full">
+          <img src="${variant.back}" alt="Back" class="max-w-full max-h-full object-contain pointer-events-none" />
+        </div>
+      `;
+
+      initSwiper();
+    }
+
+    function updateWhatsAppLink() {
+      if (!whatsappBtn) return;
+      const baseUrl = whatsappBtn.getAttribute('data-base-url');
+      let finalMessage = `${baseUrl}%20en%20color%20${encodeURIComponent(activeColor)}`;
+      finalMessage += activeSize ? `%20y%20talla%20${activeSize}` : `%20en%20talla...`;
+      whatsappBtn.href = finalMessage;
+    }
+
+    // Cambios de color e interactividad del anillo de borde
+    colorButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const targetColor = button.getAttribute('data-variant-toggle');
+        if (!targetColor || targetColor === activeColor) return;
+
+        activeColor = targetColor;
+        
+        // Limpiar bordes de todos y añadir el negro al seleccionado
+        colorButtons.forEach(btn => {
+          (btn as HTMLElement).style.borderColor = 'transparent';
+        });
+        (button as HTMLElement).style.borderColor = '#000000';
+
+        if (colorNameText) colorNameText.textContent = button.getAttribute('title') || '';
+
+        loadVariantImages(activeColor);
+        updateWhatsAppLink();
+      });
+    });
+
+    // Selección de tallas
+    sizeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        sizeButtons.forEach(btn => btn.classList.remove('bg-black', 'text-white', 'border-black'));
+        button.classList.add('bg-black', 'text-white', 'border-black');
+        activeSize = button.textContent?.trim() || "";
+        updateWhatsAppLink();
+      });
+    });
+
+    // Carga inicial al entrar a la página
+    if (activeColor) {
+      loadVariantImages(activeColor);
+      updateWhatsAppLink();
+    }
+  </script>
+</Layout>
+
+<style is:global>
+  .swiper-pagination-bullet-active {
+    background: #000000 !important;
+    width: 6px !important;
+    height: 6px !important;
+  }
+  .swiper-pagination-bullet {
+    background: #d4d4d4;
+    opacity: 1;
+    width: 6px;
+    height: 6px;
+  }
+  .swiper-button-disabled {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+</style>

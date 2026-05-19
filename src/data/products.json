@@ -1,0 +1,364 @@
+[
+  {
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  },{
+    "id": "franela-essential",
+    "name": "Franela Essential Premium",
+    "price": 35,
+    "category": "New Arrivals",
+    "variants": [
+      {
+        "colorName": "Blanco",
+        "hex": "#FFFFFF",
+        "imageFront": "/src/assets/FRANELA-BLANCA_01.png",
+        "imageBack": "/src/assets/FRANELA-BLANCA_01.png"
+      },
+      {
+        "colorName": "Vino",
+        "hex": "#58111A",
+        "imageFront": "/src/assets/NOPE-VINO_02.png",
+        "imageBack": "/src/assets/NOPE-VINO_02.png"
+      }
+    ]
+  }
+]

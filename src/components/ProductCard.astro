@@ -1,0 +1,52 @@
+---
+// src/components/ProductCard.astro
+import { Image } from 'astro:assets';
+
+interface Props {
+  title: string;
+  price: string;
+  category: string;
+  imageFront: ImageMetadata;
+  imageHover: ImageMetadata;
+  href: string;
+}
+
+const { title, price, category, imageFront, imageHover, href } = Astro.props;
+---
+
+<a href={href} class="group block w-full text-black mb-8">
+  <div class="relative w-full aspect-[3/4] overflow-hidden bg-neutral-100 mb-4">
+    
+    <Image 
+      src={imageFront} 
+      alt={title} 
+      class="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out group-hover:opacity-0"
+      width={600}
+      height={800}
+    />
+
+    <Image 
+      src={imageHover} 
+      alt={`${title} en uso`} 
+      class="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-all duration-700 ease-in-out scale-100 group-hover:opacity-100 group-hover:scale-102"
+      width={600}
+      height={800}
+    />
+
+    <span class="absolute top-4 left-4 font-body text-[9px] tracking-[0.2em] uppercase bg-black text-white px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      Ver detalle
+    </span>
+  </div>
+
+  <div class="flex flex-col space-y-1 px-1">
+    <span class="font-body text-[10px] uppercase tracking-[0.2em] text-neutral-400">{category}</span>
+    <div class="flex justify-between items-baseline">
+      <h3 class="font-heading text-sm md:text-base tracking-[0.05em] uppercase truncate max-w-[75%]">
+        {title}
+      </h3>
+      <span class="font-body text-sm font-medium tracking-wider">
+        {price}
+      </span>
+    </div>
+  </div>
+</a>

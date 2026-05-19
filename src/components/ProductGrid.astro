@@ -1,0 +1,222 @@
+---
+// src/components/ProductGrid.astro
+import products from '../data/products.json';
+import { Image } from 'astro:assets';
+
+// 1. Importación dinámica de todas las imágenes de la carpeta assets
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/*.{jpeg,jpg,png,gif}');
+
+// 2. Extraer categorías únicas del JSON automáticamente para los filtros
+const categories = ['all', ...new Set(products.map(p => p.category.toLowerCase()))];
+---
+
+<section class="w-full bg-white py-24 font-body">
+  <div class="container mx-auto px-6">
+    
+    <div class="mb-16 flex flex-col md:flex-row md:items-baseline md:justify-between border-b border-neutral-100 pb-4 gap-y-4">
+      
+      <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-neutral-900">
+        Curated Essentials
+      </h2>
+      
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 md:justify-end">
+        {categories.map((category) => (
+          <button
+            data-filter={category}
+            class={`category-btn text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-300 pb-1 relative before:absolute before:bottom-0 before:left-0 before:w-full before:h-[1px] before:bg-black before:scale-x-0 before:transition-transform before:duration-300 hover:text-black ${
+              category === 'all' 
+                ? 'text-black before:scale-x-100 font-semibold' 
+                : 'text-neutral-400'
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+    </div>
+
+    <div class="mb-8 flex items-baseline justify-between">
+      <span id="pieces-count" class="text-[10px] text-neutral-400 uppercase tracking-widest">
+        Showing {products.length} pieces
+      </span>
+    </div>
+
+    <div id="grid-container" class="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-6">
+      {products.map((product) => {
+        const defaultVariant = product.variants[0];
+
+        return (
+          <div 
+            data-category={product.category.toLowerCase()}
+            class="product-card group flex flex-col justify-between h-full transition-all duration-500 ease-in-out opacity-100 scale-100"
+          >
+            {/* Contenedor del enlace que envuelve la imagen y textos principales */}
+            <a href={`/productos/${product.id}`} class="product-link block w-full h-full no-underline">
+              
+              {/* Contenedor de la Imagen [3/4] con todas las variantes renderizadas ocultas */}
+              <div class="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50 mb-4 select-none">
+                {product.variants.map((variant, vIndex) => {
+                  const frontImageThunk = images[variant.imageFront];
+                  const backImageThunk = images[variant.imageBack];
+                  
+                  if (!frontImageThunk || !backImageThunk) {
+                    throw new Error(`No se encontraron las imágenes para la variante ${variant.colorName} de: ${product.name}`);
+                  }
+
+                  return (
+                    <div 
+                      data-variant-images={variant.colorName.toLowerCase()} 
+                      class={`absolute inset-0 w-full h-full transition-opacity duration-500 ${vIndex === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                    >
+                      {/* Imagen Frontal */}
+                      <Image 
+                        src={frontImageThunk()} 
+                        alt={`${product.name} - ${variant.colorName}`}
+                        class="front-img absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out group-hover:md:opacity-0"
+                      />
+                      {/* Imagen Trasera (Solo en hover para PC) */}
+                      <Image 
+                        src={backImageThunk()} 
+                        alt={`${product.name} detail`}
+                        class="back-img absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-700 ease-in-out group-hover:md:opacity-100"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div class="flex flex-col space-y-1.5">
+                <div class="flex justify-between items-start gap-x-2">
+                  <h3 class="text-[11px] uppercase tracking-[0.15em] text-neutral-800 font-medium truncate max-w-[75%]">
+                    {product.name}
+                  </h3>
+                  <span class="text-[11px] uppercase tracking-[0.15em] text-neutral-900 font-semibold text-nowrap">
+                    ${product.price} USD
+                  </span>
+                </div>
+                
+                <p class="text-[9px] uppercase tracking-widest text-neutral-400">
+                  {product.category}
+                </p>
+              </div>
+            </a>
+
+            {/* Fila de Círculos de Color - OPTIMIZADA PARA MÓVIL (Área táctil oculta de 48px) */}
+            <div class="flex flex-wrap items-center gap-x-1 bg-transparent mt-3 z-20 relative -ml-3">
+              {product.variants && product.variants.map((variant, index) => (
+                <button 
+                  data-color-switch={variant.colorName.toLowerCase()}
+                  class="grid-color-btn w-12 h-12 flex items-center justify-center bg-transparent border-0 outline-none transition-transform duration-300 hover:scale-110 active:scale-95"
+                  title={variant.colorName}
+                >
+                  {/* El círculo visual real mide w-5 h-5 (20px) pero el botón que lo contiene mide w-12 (48px) */}
+                  <span 
+                    class="color-indicator w-5 h-5 rounded-full p-[2px] border transition-all duration-300"
+                    style={`border-color: ${index === 0 ? '#000000' : 'transparent'}; background-color: ${variant.hex};`}
+                  >
+                    <span 
+                      class={`w-full h-full rounded-full block shadow-[inset_0_0_0_1px_rgba(0,0,0,0.15)] ${
+                        variant.hex.toUpperCase() === '#FFFFFF' ? 'border border-neutral-200' : ''
+                      }`}
+                      style={`background-color: ${variant.hex};`}
+                    />
+                  </span>
+                </button>
+              ))}
+            </div>
+
+          </div>
+        );
+      })}
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // 1. LÓGICA DE FILTRADO POR CATEGORÍAS
+  const filterButtons = document.querySelectorAll('.category-btn');
+  const productCards = document.querySelectorAll('.product-card');
+  const countSpan = document.getElementById('pieces-count');
+
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const selectedFilter = button.getAttribute('data-filter');
+
+      filterButtons.forEach(btn => {
+        btn.classList.remove('text-black', 'font-semibold', 'before:scale-x-100');
+        btn.classList.add('text-neutral-400');
+      });
+      button.classList.remove('text-neutral-400');
+      button.classList.add('text-black', 'font-semibold', 'before:scale-x-100');
+
+      let visibleCount = 0;
+      
+      productCards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category');
+
+        if (selectedFilter === 'all' || cardCategory === selectedFilter) {
+          (card as HTMLElement).style.display = 'flex';
+          setTimeout(() => {
+            card.classList.remove('opacity-0', 'scale-95');
+            card.classList.add('opacity-100', 'scale-100');
+          }, 50);
+          visibleCount++;
+        } else {
+          card.classList.remove('opacity-100', 'scale-100');
+          card.classList.add('opacity-0', 'scale-95');
+          setTimeout(() => {
+            (card as HTMLElement).style.display = 'none';
+          }, 400);
+        }
+      });
+
+      if (countSpan) {
+        countSpan.textContent = `Showing ${visibleCount} pieces`;
+      }
+    });
+  });
+
+  // 2. INTERACTIVIDAD DE CAMBIO DE COLOR EN LA PROPIA TARJETA (CORREGIDA PARA LA ESTRUCTURA ANIDADA)
+  productCards.forEach(card => {
+    const colorButtons = card.querySelectorAll('[data-color-switch]');
+    const imageContainers = card.querySelectorAll('[data-variant-images]');
+
+    colorButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const selectedColor = button.getAttribute('data-color-switch');
+
+        // Alternar el anillo negro en el indicador interno de color de esta tarjeta
+        colorButtons.forEach(btn => {
+          const indicator = btn.querySelector('.color-indicator') as HTMLElement;
+          if (indicator) indicator.style.borderColor = 'transparent';
+        });
+        
+        const activeIndicator = button.querySelector('.color-indicator') as HTMLElement;
+        if (activeIndicator) activeIndicator.style.borderColor = '#000000';
+
+        // Cambiar la visibilidad de las imágenes según el color seleccionado
+        imageContainers.forEach(container => {
+          const containerColor = container.getAttribute('data-variant-images');
+          if (containerColor === selectedColor) {
+            container.classList.remove('opacity-0', 'z-0');
+            container.classList.add('opacity-100', 'z-10');
+          } else {
+            container.classList.remove('opacity-100', 'z-10');
+            container.classList.add('opacity-0', 'z-0');
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<style>
+  .product-card {
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+  }
+</style>
