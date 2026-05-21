@@ -1,222 +1,336 @@
 ---
 // src/components/ProductGrid.astro
-import products from '../data/products.json';
-import { Image } from 'astro:assets';
+import { client, urlFor } from '../lib/sanity';
 
-// 1. Importación dinámica de todas las imágenes de la carpeta assets
-const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/*.{jpeg,jpg,png,gif}');
+// Definimos las interfaces de TypeScript para que el editor sepa exactamente qué datos vienen de Sanity
+interface Variant {
+  colorName: string;
+  colorHex: string;
+  availableSizes: string[];
+  images: Array<{ asset: { url: string } }>;
+}
 
-// 2. Extraer categorías únicas del JSON automáticamente para los filtros
-const categories = ['all', ...new Set(products.map(p => p.category.toLowerCase()))];
+interface Product {
+  sku: string;
+  name: string;
+  category: string;
+  price: number;
+  variants: Variant[];
+}
+
+// Jalamos los productos con la tipación correcta
+const productsQuery = `*[_type == "product" && count(variants[].availableSizes[]) > 0] {
+  sku,
+  name,
+  category,
+  price,
+  variants[] {
+    colorName,
+    "colorHex": hex.hex,
+    availableSizes,
+    images[] { asset->{ url } }
+  }
+}`;
+
+const products: Product[] = await client.fetch(productsQuery);
+
+const categories = [
+  { title: 'Todos', value: 'all' },
+  { title: 'Jackets', value: 'jackets' },
+  { title: 'Sets', value: 'sets' },
+  { title: 'Chemises', value: 'chemises' },
+  { title: 'Camisas', value: 'camisas' },
+  { title: 'T-Shirts', value: 't-shirts' },
+  { title: 'Sweaters', value: 'sweaters' },
+  { title: 'Shorts', value: 'shorts' },
+  { title: 'Jeans & Pantalones', value: 'jeans-pantalones' }
+];
 ---
 
-<section class="w-full bg-white py-24 font-body">
-  <div class="container mx-auto px-6">
-    
-    <div class="mb-16 flex flex-col md:flex-row md:items-baseline md:justify-between border-b border-neutral-100 pb-4 gap-y-4">
-      
-      <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-neutral-900">
-        Curated Essentials
-      </h2>
-      
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 md:justify-end">
-        {categories.map((category) => (
-          <button
-            data-filter={category}
-            class={`category-btn text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-300 pb-1 relative before:absolute before:bottom-0 before:left-0 before:w-full before:h-[1px] before:bg-black before:scale-x-0 before:transition-transform before:duration-300 hover:text-black ${
-              category === 'all' 
-                ? 'text-black before:scale-x-100 font-semibold' 
-                : 'text-neutral-400'
-            }`}
+<section id="catalogo" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+  
+  <div class="flex overflow-x-auto md:justify-center gap-6 md:gap-10 border-b border-neutral-100 pb-3 mb-12 no-scrollbar">
+    {categories.map((cat) => (
+      <button
+        data-category-btn={cat.value}
+        class="text-xs font-medium tracking-[0.15em] uppercase pb-2 border-b border-transparent text-neutral-400 hover:text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer"
+      >
+        {cat.title}
+      </button>
+    ))}
+  </div>
+
+  <div class="grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
+    {products.map((product: Product, pIndex: number) => {
+      const defaultVariant = product.variants[0];
+      const defaultImage = defaultVariant.images?.[0] 
+        ? urlFor(defaultVariant.images[0]).width(600).height(800).fit('crop').format('webp').url()
+        : '/placeholder.jpg';
+
+      const productDataJson = JSON.stringify({
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        variants: product.variants.map((v: Variant) => ({
+          colorName: v.colorName,
+          colorHex: v.colorHex,
+          availableSizes: v.availableSizes,
+          images: v.images?.map((img: any) => urlFor(img).width(800).height(1000).fit('crop').format('webp').url()) || []
+        }))
+      });
+
+      return (
+        <div 
+          data-product-card={product.category}
+          class="group bg-white flex flex-col justify-between"
+        >
+          <div 
+            data-open-modal
+            data-product-info={productDataJson}
+            class="relative w-full h-[450px] bg-neutral-50 overflow-hidden cursor-pointer"
           >
-            {category}
-          </button>
-        ))}
+            <img 
+              id={`prod-img-${pIndex}`}
+              src={defaultImage} 
+              alt={product.name}
+              class="w-full h-full object-center object-cover transition-all duration-500 group-hover:scale-102"
+              loading="lazy"
+            />
+            <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span class="bg-white/90 text-neutral-900 text-[10px] tracking-widest uppercase px-4 py-2 font-medium shadow-sm">Ver Detalle</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-between items-start">
+            <div class="space-y-1">
+              <span class="block text-[9px] font-mono tracking-widest text-neutral-400 uppercase">{product.sku}</span>
+              <h2 class="text-xs font-medium tracking-wider text-neutral-800 uppercase">{product.name}</h2>
+            </div>
+            <p class="text-xs font-bold tracking-wider text-neutral-900">{product.price} €</p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
+            <div class="flex gap-2.5">
+              {product.variants.map((v: Variant, vIndex: number) => {
+                const imgUrl = v.images?.[0] 
+                  ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url()
+                  : '';
+                const sizesString = v.availableSizes.join(' · ');
+
+                return (
+                  <button 
+                    data-color-select
+                    data-target-img={`prod-img-${pIndex}`}
+                    data-target-sizes={`prod-sizes-${pIndex}`}
+                    data-img-src={imgUrl}
+                    data-sizes={sizesString}
+                    class={`w-5 h-5 rounded-full border border-neutral-300 block shadow-sm cursor-pointer transition-transform hover:scale-110 focus:outline-none ${vIndex === 0 ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`}
+                    style={`background-color: ${v.colorHex}`}
+                    title={v.colorName}
+                  />
+                );
+              })}
+            </div>
+
+            <span id={`prod-sizes-${pIndex}`} class="text-[9px] font-bold tracking-widest text-neutral-500 font-mono">
+              {defaultVariant.availableSizes.join(' · ')}
+            </span>
+          </div>
+
+        </div>
+      );
+    })}
+  </div>
+
+  <div id="product-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-4xl max-h-[90vh] md:h-auto overflow-y-auto rounded-none flex flex-col md:flex-row relative shadow-2xl">
+      
+      <button id="close-modal" class="absolute top-4 right-4 z-10 p-2 text-neutral-400 hover:text-neutral-900 cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="w-full md:w-1/2 bg-neutral-50 h-[400px] md:h-[550px]">
+        <img id="modal-img" src="" alt="" class="w-full h-full object-cover object-center transition-all duration-300">
+      </div>
+
+      <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-between bg-white">
+        <div class="space-y-6">
+          <div>
+            <span id="modal-sku" class="text-[10px] font-mono tracking-widest text-neutral-400 uppercase"></span>
+            <h2 id="modal-title" class="text-xl font-light tracking-wide text-neutral-900 uppercase font-serif mt-1"></h2>
+            <p id="modal-price" class="text-lg font-bold text-neutral-900 mt-2"></p>
+          </div>
+
+          <div>
+            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Color disponible</p>
+            <div id="modal-colors-container" class="flex gap-3"></div>
+          </div>
+
+          <div>
+            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Tallas disponibles</p>
+            <div id="modal-sizes-container" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <a 
+            id="modal-whatsapp-btn"
+            href="#" 
+            target="_blank" 
+            class="w-full block text-center bg-neutral-900 text-white text-xs font-semibold tracking-[0.2em] uppercase py-4 hover:bg-neutral-800 transition-colors"
+          >
+            Consultar Disponibilidad
+          </a>
+        </div>
       </div>
 
     </div>
-
-    <div class="mb-8 flex items-baseline justify-between">
-      <span id="pieces-count" class="text-[10px] text-neutral-400 uppercase tracking-widest">
-        Showing {products.length} pieces
-      </span>
-    </div>
-
-    <div id="grid-container" class="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-6">
-      {products.map((product) => {
-        const defaultVariant = product.variants[0];
-
-        return (
-          <div 
-            data-category={product.category.toLowerCase()}
-            class="product-card group flex flex-col justify-between h-full transition-all duration-500 ease-in-out opacity-100 scale-100"
-          >
-            {/* Contenedor del enlace que envuelve la imagen y textos principales */}
-            <a href={`/productos/${product.id}`} class="product-link block w-full h-full no-underline">
-              
-              {/* Contenedor de la Imagen [3/4] con todas las variantes renderizadas ocultas */}
-              <div class="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50 mb-4 select-none">
-                {product.variants.map((variant, vIndex) => {
-                  const frontImageThunk = images[variant.imageFront];
-                  const backImageThunk = images[variant.imageBack];
-                  
-                  if (!frontImageThunk || !backImageThunk) {
-                    throw new Error(`No se encontraron las imágenes para la variante ${variant.colorName} de: ${product.name}`);
-                  }
-
-                  return (
-                    <div 
-                      data-variant-images={variant.colorName.toLowerCase()} 
-                      class={`absolute inset-0 w-full h-full transition-opacity duration-500 ${vIndex === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                    >
-                      {/* Imagen Frontal */}
-                      <Image 
-                        src={frontImageThunk()} 
-                        alt={`${product.name} - ${variant.colorName}`}
-                        class="front-img absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out group-hover:md:opacity-0"
-                      />
-                      {/* Imagen Trasera (Solo en hover para PC) */}
-                      <Image 
-                        src={backImageThunk()} 
-                        alt={`${product.name} detail`}
-                        class="back-img absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-700 ease-in-out group-hover:md:opacity-100"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div class="flex flex-col space-y-1.5">
-                <div class="flex justify-between items-start gap-x-2">
-                  <h3 class="text-[11px] uppercase tracking-[0.15em] text-neutral-800 font-medium truncate max-w-[75%]">
-                    {product.name}
-                  </h3>
-                  <span class="text-[11px] uppercase tracking-[0.15em] text-neutral-900 font-semibold text-nowrap">
-                    ${product.price} USD
-                  </span>
-                </div>
-                
-                <p class="text-[9px] uppercase tracking-widest text-neutral-400">
-                  {product.category}
-                </p>
-              </div>
-            </a>
-
-            {/* Fila de Círculos de Color - OPTIMIZADA PARA MÓVIL (Área táctil oculta de 48px) */}
-            <div class="flex flex-wrap items-center gap-x-1 bg-transparent mt-3 z-20 relative -ml-3">
-              {product.variants && product.variants.map((variant, index) => (
-                <button 
-                  data-color-switch={variant.colorName.toLowerCase()}
-                  class="grid-color-btn w-12 h-12 flex items-center justify-center bg-transparent border-0 outline-none transition-transform duration-300 hover:scale-110 active:scale-95"
-                  title={variant.colorName}
-                >
-                  {/* El círculo visual real mide w-5 h-5 (20px) pero el botón que lo contiene mide w-12 (48px) */}
-                  <span 
-                    class="color-indicator w-5 h-5 rounded-full p-[2px] border transition-all duration-300"
-                    style={`border-color: ${index === 0 ? '#000000' : 'transparent'}; background-color: ${variant.hex};`}
-                  >
-                    <span 
-                      class={`w-full h-full rounded-full block shadow-[inset_0_0_0_1px_rgba(0,0,0,0.15)] ${
-                        variant.hex.toUpperCase() === '#FFFFFF' ? 'border border-neutral-200' : ''
-                      }`}
-                      style={`background-color: ${variant.hex};`}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
-
-          </div>
-        );
-      })}
-    </div>
-
   </div>
 </section>
 
+<style>
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
 <script>
-  // 1. LÓGICA DE FILTRADO POR CATEGORÍAS
-  const filterButtons = document.querySelectorAll('.category-btn');
-  const productCards = document.querySelectorAll('.product-card');
-  const countSpan = document.getElementById('pieces-count');
-
-  filterButtons.forEach(button => {
+  // --- PARTE 1: FILTRADO DE CATEGORÍAS ---
+  const catButtons = document.querySelectorAll('[data-category-btn]');
+  const productCards = document.querySelectorAll('[data-product-card]');
+  const allBtn = document.querySelector('[data-category-btn="all"]');
+  if (allBtn) {
+    allBtn.classList.remove('text-neutral-400');
+    allBtn.classList.add('text-neutral-900', 'border-neutral-900');
+  }
+  catButtons.forEach(button => {
     button.addEventListener('click', () => {
-      const selectedFilter = button.getAttribute('data-filter');
-
-      filterButtons.forEach(btn => {
-        btn.classList.remove('text-black', 'font-semibold', 'before:scale-x-100');
-        btn.classList.add('text-neutral-400');
+      const selectedCategory = button.getAttribute('data-category-btn');
+      catButtons.forEach(btn => {
+        btn.classList.remove('text-neutral-900', 'border-neutral-900');
+        btn.classList.add('text-neutral-400', 'border-transparent');
       });
-      button.classList.remove('text-neutral-400');
-      button.classList.add('text-black', 'font-semibold', 'before:scale-x-100');
+      button.classList.remove('text-neutral-400', 'border-transparent');
+      button.classList.add('text-neutral-900', 'border-neutral-900');
 
-      let visibleCount = 0;
-      
       productCards.forEach(card => {
-        const cardCategory = card.getAttribute('data-category');
-
-        if (selectedFilter === 'all' || cardCategory === selectedFilter) {
+        const productCategory = card.getAttribute('data-product-card');
+        if (selectedCategory === 'all' || productCategory === selectedCategory) {
           (card as HTMLElement).style.display = 'flex';
-          setTimeout(() => {
-            card.classList.remove('opacity-0', 'scale-95');
-            card.classList.add('opacity-100', 'scale-100');
-          }, 50);
-          visibleCount++;
         } else {
-          card.classList.remove('opacity-100', 'scale-100');
-          card.classList.add('opacity-0', 'scale-95');
-          setTimeout(() => {
-            (card as HTMLElement).style.display = 'none';
-          }, 400);
+          (card as HTMLElement).style.display = 'none';
         }
       });
+    });
+  });
 
-      if (countSpan) {
-        countSpan.textContent = `Showing ${visibleCount} pieces`;
+  // --- PARTE 2: INTERACTIVIDAD DE COLORES EN LA GRILLA ---
+  const colorButtons = document.querySelectorAll('[data-color-select]');
+  colorButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetImgId = btn.getAttribute('data-target-img');
+      const targetSizesId = btn.getAttribute('data-target-sizes');
+      const newImgSrc = btn.getAttribute('data-img-src');
+      const newSizes = btn.getAttribute('data-sizes');
+
+      if (targetImgId && newImgSrc) {
+        const imgElement = document.getElementById(targetImgId) as HTMLImageElement;
+        if (imgElement) imgElement.src = newImgSrc;
       }
+      if (targetSizesId && newSizes) {
+        const sizesElement = document.getElementById(targetSizesId);
+        if (sizesElement) sizesElement.textContent = newSizes;
+      }
+      const parentContainer = btn.parentElement;
+      if (parentContainer) {
+        const siblingButtons = parentContainer.querySelectorAll('[data-color-select]');
+        siblingButtons.forEach(sBtn => sBtn.classList.remove('ring-1', 'ring-neutral-900', 'ring-offset-2'));
+      }
+      btn.classList.add('ring-1', 'ring-neutral-900', 'ring-offset-2');
     });
   });
 
-  // 2. INTERACTIVIDAD DE CAMBIO DE COLOR EN LA PROPIA TARJETA (CORREGIDA PARA LA ESTRUCTURA ANIDADA)
-  productCards.forEach(card => {
-    const colorButtons = card.querySelectorAll('[data-color-switch]');
-    const imageContainers = card.querySelectorAll('[data-variant-images]');
+  // --- PARTE 3: LÓGICA DEL MODAL INTERNO ---
+  const openModalElements = document.querySelectorAll('[data-open-modal]');
+  const modal = document.getElementById('product-modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  
+  const modalImg = document.getElementById('modal-img') as HTMLImageElement;
+  const modalSku = document.getElementById('modal-sku');
+  const modalTitle = document.getElementById('modal-title');
+  const modalPrice = document.getElementById('modal-price');
+  const modalColorsContainer = document.getElementById('modal-colors-container');
+  const modalSizesContainer = document.getElementById('modal-sizes-container');
+  const modalWhatsappBtn = document.getElementById('modal-whatsapp-btn') as HTMLAnchorElement;
 
-    colorButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+  openModalElements.forEach(element => {
+    element.addEventListener('click', () => {
+      const rawData = element.getAttribute('data-product-info');
+      if (!rawData || !modal) return;
+      
+      // ⚡ LA SOLUCIÓN: Vaciamos la imagen vieja de inmediato antes de rellenar los datos nuevos.
+      // Esto evita el efecto fantasma del producto anterior.
+      if (modalImg) {
+        modalImg.src = ''; 
+      }
 
-        const selectedColor = button.getAttribute('data-color-switch');
+      const product = JSON.parse(rawData);
+      let currentVariant = product.variants[0];
 
-        // Alternar el anillo negro en el indicador interno de color de esta tarjeta
-        colorButtons.forEach(btn => {
-          const indicator = btn.querySelector('.color-indicator') as HTMLElement;
-          if (indicator) indicator.style.borderColor = 'transparent';
-        });
+      const updateModalContent = (variant: any) => {
+        if (modalImg && variant.images?.[0]) modalImg.src = variant.images[0];
         
-        const activeIndicator = button.querySelector('.color-indicator') as HTMLElement;
-        if (activeIndicator) activeIndicator.style.borderColor = '#000000';
+        if (modalSizesContainer) {
+          modalSizesContainer.innerHTML = '';
+          variant.availableSizes.forEach((size: string) => {
+            const span = document.createElement('span');
+            span.className = 'border border-neutral-200 px-3 py-1.5 text-xs font-mono font-bold text-neutral-700 bg-neutral-50';
+            span.textContent = size;
+            modalSizesContainer.appendChild(span);
+          });
+        }
 
-        // Cambiar la visibilidad de las imágenes según el color seleccionado
-        imageContainers.forEach(container => {
-          const containerColor = container.getAttribute('data-variant-images');
-          if (containerColor === selectedColor) {
-            container.classList.remove('opacity-0', 'z-0');
-            container.classList.add('opacity-100', 'z-10');
-          } else {
-            container.classList.remove('opacity-100', 'z-10');
-            container.classList.add('opacity-0', 'z-0');
-          }
+        if (modalWhatsappBtn) {
+          const text = `Hola VKMEN, me interesa el artículo: ${product.name} (SKU: ${product.sku}) en Color: ${variant.colorName}. ¿Tienen disponibilidad?`;
+          modalWhatsappBtn.href = `https://wa.me/584241234567?text=${encodeURIComponent(text)}`;
+        }
+      };
+
+      if (modalSku) modalSku.textContent = `SKU: ${product.sku}`;
+      if (modalTitle) modalTitle.textContent = product.name;
+      if (modalPrice) modalPrice.textContent = `${product.price} €`;
+      
+      if (modalColorsContainer) {
+        modalColorsContainer.innerHTML = '';
+        product.variants.forEach((v: any, index: number) => {
+          const btn = document.createElement('button');
+          btn.className = `w-6 h-6 rounded-full border border-neutral-300 block cursor-pointer transition-all ${index === 0 ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`;
+          btn.style.backgroundColor = v.colorHex;
+          btn.title = v.colorName;
+          
+          btn.addEventListener('click', () => {
+            const allModalColorBtns = modalColorsContainer.querySelectorAll('button');
+            allModalColorBtns.forEach(b => b.classList.remove('ring-1', 'ring-neutral-900', 'ring-offset-2'));
+            btn.classList.add('ring-1', 'ring-neutral-900', 'ring-offset-2');
+            updateModalContent(v);
+          });
+
+          modalColorsContainer.appendChild(btn);
         });
-      });
+      }
+
+      updateModalContent(currentVariant);
+
+      modal.style.display = 'flex';
     });
   });
-</script>
 
-<style>
-  .product-card {
-    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+  if (closeModalBtn && modal) {
+    closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
   }
-</style>
+</script>
