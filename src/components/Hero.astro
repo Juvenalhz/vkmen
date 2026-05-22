@@ -2,7 +2,7 @@
 // src/components/Hero.astro
 import { client, urlFor } from '../lib/sanity';
 
-// Ejecutamos la query exacta para traer tus textos reales y la URL de la imagen
+// 1. Ejecutamos la query para traer tus textos y la imagen desde Sanity
 const homeQuery = `*[_type == "homeSettings"][0] {
   heroSub,
   heroTitle,
@@ -11,27 +11,27 @@ const homeQuery = `*[_type == "homeSettings"][0] {
 
 const homeData = await client.fetch(homeQuery);
 
-// Procesamos la imagen de Sanity con urlFor para asegurar compatibilidad total con Cloudflare
+// 2. Procesamos la imagen con urlFor para la CDN de Sanity (Carga optimizada para Cloudflare)
 const fondoHero = homeData?.heroImageUrl 
   ? urlFor(homeData.heroImageUrl).width(1920).height(1080).fit('crop').format('webp').url()
   : '';
 ---
 
-<section id="hero" class="relative min-h-screen w-full overflow-hidden bg-black flex items-end pb-24 md:pb-32">
+<section id="hero" class="relative h-auto md:min-h-screen w-full overflow-hidden bg-black flex md:items-end">
   
-  <div class="absolute inset-0 z-0 h-full w-full">
+  <div class="relative md:absolute inset-0 z-0 h-full w-full">
     {fondoHero && (
       <img 
         src={fondoHero} 
         alt="VKMEN Colección" 
-        class="h-full w-full object-cover object-center"
+        class="w-full h-auto md:h-full md:object-cover object-center"
         loading="eager"
       />
     )}
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/70 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-10"></div>
   </div>
 
-  <div class="container mx-auto px-6 relative z-20 text-white">
+  <div class="container mx-auto px-6 relative z-20 text-white pt-8 pb-16 md:pb-24 lg:pb-32">
     <div class="max-w-4xl" id="hero-content">
       
       <p class="font-body text-[11px] uppercase tracking-[0.4em] opacity-80 mb-4" id="hero-sub">
@@ -39,7 +39,7 @@ const fondoHero = homeData?.heroImageUrl
       </p>
 
       <h1 
-        class="font-heading text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" 
+        class="font-heading text-4xl sm:text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" 
         id="hero-title"
         set:html={homeData?.heroTitle || "The Future is<br/>Modern."}
       />
@@ -69,14 +69,14 @@ const fondoHero = homeData?.heroImageUrl
   window.addEventListener('DOMContentLoaded', () => {
     const tl = gsap.timeline({ defaults: { ease: "power3.out" }});
 
-    // Tu efecto de escala inicial sobre la imagen
+    // Efecto de escala inicial sobre la imagen de Sanity
     gsap.from("#hero img", {
       scale: 1.1,
       duration: 1.8,
       ease: "power2.out"
     });
 
-    // Tus animaciones secuenciales intactas
+    // Tus animaciones de texto secuenciales intactas con sus respectivos IDs
     tl.from("#hero-sub", { 
       opacity: 0, 
       y: 20, 
