@@ -2,7 +2,6 @@
 // src/components/Hero.astro
 import { client, urlFor } from '../lib/sanity';
 
-// 1. Ejecutamos la query para traer tus textos y la imagen desde Sanity
 const homeQuery = `*[_type == "homeSettings"][0] {
   heroSub,
   heroTitle,
@@ -11,53 +10,37 @@ const homeQuery = `*[_type == "homeSettings"][0] {
 
 const homeData = await client.fetch(homeQuery);
 
-// 2. Procesamos la imagen con urlFor para la CDN de Sanity (Carga optimizada para Cloudflare)
 const fondoHero = homeData?.heroImageUrl 
-  ? urlFor(homeData.heroImageUrl).width(1920).height(1080).fit('crop').format('webp').url()
+  ? urlFor(homeData.heroImageUrl).width(1920).format('webp').url()
   : '';
 ---
 
-<section id="hero" class="relative h-auto md:min-h-screen w-full overflow-hidden bg-black flex md:items-end">
+<section id="hero" class="relative h-[50vh] md:min-h-screen w-full overflow-hidden bg-black flex items-end pb-8 md:pb-32">
   
-  <div class="relative md:absolute inset-0 z-0 h-full w-full">
+  <div class="absolute inset-0 z-0 h-full w-full">
     {fondoHero && (
       <img 
         src={fondoHero} 
         alt="VKMEN Colección" 
-        class="w-full h-auto md:h-full md:object-cover object-center"
+        class="h-full w-full object-cover object-center"
         loading="eager"
       />
     )}
-    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 z-10"></div>
   </div>
 
-  <div class="container mx-auto px-6 relative z-20 text-white pt-8 pb-16 md:pb-24 lg:pb-32">
+  <div class="container mx-auto px-6 relative z-20 text-white w-full">
     <div class="max-w-4xl" id="hero-content">
       
-      <p class="font-body text-[11px] uppercase tracking-[0.4em] opacity-80 mb-4" id="hero-sub">
-        {homeData?.heroSub || "Urban Luxury • Caracas Collection"}
+      <p class="font-body text-[9px] md:text-[11px] uppercase tracking-[0.5em] opacity-80 mb-2 md:mb-4 shadow-premium" id="hero-sub">
+        {homeData?.heroSub || "Urban Luxury • Caracas"}
       </p>
 
       <h1 
-        class="font-heading text-4xl sm:text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" 
+        class="font-heading text-2xl sm:text-3xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.2] md:leading-[1.1] uppercase shadow-premium" 
         id="hero-title"
         set:html={homeData?.heroTitle || "The Future is<br/>Modern."}
       />
-
-      <div class="flex flex-col sm:flex-row gap-6 mt-12" id="hero-actions">
-        <a 
-          href="/nueva-coleccion" 
-          class="inline-block bg-white text-black font-body text-[12px] uppercase tracking-[0.3em] px-12 py-5 text-center transition-all duration-300 hover:bg-neutral-200 hover:scale-105"
-        >
-          Explore Collection
-        </a>
-        <a 
-          href="/proximamente" 
-          class="inline-block bg-black/40 border border-white/50 text-white font-body text-[12px] uppercase tracking-[0.3em] px-12 py-5 text-center transition-all duration-300 hover:bg-white/10"
-        >
-          Digital Catalog
-        </a>
-      </div>
 
     </div>
   </div>
@@ -69,30 +52,19 @@ const fondoHero = homeData?.heroImageUrl
   window.addEventListener('DOMContentLoaded', () => {
     const tl = gsap.timeline({ defaults: { ease: "power3.out" }});
 
-    // Efecto de escala inicial sobre la imagen de Sanity
     gsap.from("#hero img", {
-      scale: 1.1,
-      duration: 1.8,
+      scale: 1.05,
+      duration: 2,
       ease: "power2.out"
     });
 
-    // Tus animaciones de texto secuenciales intactas con sus respectivos IDs
-    tl.from("#hero-sub", { 
-      opacity: 0, 
-      y: 20, 
-      duration: 0.6, 
-      delay: 0.5 
-    })
-    .from("#hero-title", { 
-      opacity: 0, 
-      y: 40, 
-      duration: 0.8 
-    }, "-=0.4")
-    .from("#hero-actions a", { 
-      opacity: 0, 
-      y: 20, 
-      duration: 0.6, 
-      stagger: 0.2 
-    }, "-=0.4");
+    tl.from("#hero-sub", { opacity: 0, y: 10, duration: 0.6, delay: 0.5 })
+      .from("#hero-title", { opacity: 0, y: 20, duration: 0.8 }, "-=0.4");
   });
 </script>
+
+<style>
+  .shadow-premium {
+    text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+</style>

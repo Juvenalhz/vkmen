@@ -2,31 +2,25 @@
 // src/components/Header.astro
 import { client, urlFor } from '../lib/sanity';
 
-// 1. Consultamos el campo 'logoScroll' que definimos en tu Schema de Sanity
 const headerQuery = `*[_type == "homeSettings"][0] {
   "logoScrollUrl": logoScroll.asset->url
 }`;
 
 const headerData = await client.fetch(headerQuery);
 
-// 2. Procesamos la imagen de Sanity con urlFor para asegurar compatibilidad total en Cloudflare
 const logoDeScroll = headerData?.logoScrollUrl 
   ? urlFor(headerData.logoScrollUrl).width(150).fit('max').format('webp').url()
   : '';
 ---
 
-<header id="main-header" class="fixed top-0 w-full z-50 py-6 transition-all duration-300 bg-transparent">
+<header id="main-header" class="fixed top-0 w-full z-50 py-3 md:py-6 transition-all duration-300 bg-transparent">
   <div class="container mx-auto px-6 relative flex items-center justify-center">
     
-    <nav class="absolute left-6 hidden lg:flex space-x-10 text-[11px] uppercase tracking-[0.3em] font-body text-white transition-colors duration-300" id="nav-left">
-      <a href="/nueva-coleccion" class="hover:opacity-40 transition">New Arrivals</a>
-      <a href="/polos" class="hover:opacity-40 transition">Polos</a>
-    </nav>
-
-    <div class="relative flex items-center justify-center h-12 w-64" id="logo-area">
+    <div class="relative flex items-center justify-center h-9 md:h-12 w-64" id="logo-area">
+      
       <div id="logo-text" class="absolute flex flex-col items-center justify-center text-white text-center transition-all duration-300">
-        <span class="font-heading text-2xl tracking-[0.15em] leading-none uppercase text-nowrap">VK MEN</span>
-        <span class="font-body text-[9px] tracking-[0.4em] mt-1 opacity-70 uppercase text-nowrap">Clothing Store</span>
+        <span class="font-heading text-xl md:text-2xl tracking-[0.15em] leading-none uppercase text-nowrap">VK MEN</span>
+        <span class="font-body text-[8px] md:text-[9px] tracking-[0.4em] mt-0.5 opacity-70 uppercase text-nowrap">Clothing Store</span>
       </div>
 
       <div id="logo-iso-png" class="absolute opacity-0 scale-90 transition-all duration-300">
@@ -34,19 +28,14 @@ const logoDeScroll = headerData?.logoScrollUrl
           <img 
             src={logoDeScroll} 
             alt="VK Isotipo" 
-            class="h-10 w-auto object-contain"
+            class="h-8 md:h-10 w-auto object-contain"
             loading="eager"
           />
         )}
       </div>
     </div>
 
-    <nav class="absolute right-6 hidden lg:flex space-x-10 text-[11px] uppercase tracking-[0.3em] font-body text-white transition-colors duration-300" id="nav-right">
-      <a href="/pantalones" class="hover:opacity-40 transition">Pants</a>
-      <a href="/accesorios" class="hover:opacity-40 transition">Accessories</a>
-    </nav>
-
-  </div>
+    </div>
 </header>
 
 <script>
@@ -58,33 +47,28 @@ const logoDeScroll = headerData?.logoScrollUrl
   const header = document.querySelector("#main-header") as HTMLElement;
   const logoText = document.querySelector("#logo-text") as HTMLElement;
   const logoIso = document.querySelector("#logo-iso-png") as HTMLElement;
-  const navs = document.querySelectorAll("nav");
 
   ScrollTrigger.create({
     trigger: "body",
     start: "top top",
     end: "50", 
     onLeave: () => {
-      // Al bajar: py-3 lo hace muy minimalista
-      header.classList.remove('py-6', 'bg-transparent');
+      // Al bajar: se activa el fondo blanco minimalista
+      header.classList.remove('md:py-6', 'bg-transparent');
       header.classList.add('py-3', 'bg-white', 'shadow-md');
       
       logoText.classList.add('opacity-0', '-translate-y-2');
       logoIso.classList.remove('opacity-0', 'scale-90');
       logoIso.classList.add('opacity-100', 'scale-100');
-      
-      navs.forEach(nav => (nav as HTMLElement).style.color = "black");
     },
     onEnterBack: () => {
-      // Al volver arriba: py-6
-      header.classList.add('py-6', 'bg-transparent');
+      // Al volver arriba: regresa a transparente
+      header.classList.add('md:py-6', 'bg-transparent');
       header.classList.remove('py-3', 'bg-white', 'shadow-md');
       
       logoText.classList.remove('opacity-0', '-translate-y-2');
       logoIso.classList.add('opacity-0', 'scale-90');
       logoIso.classList.remove('opacity-100', 'scale-100');
-      
-      navs.forEach(nav => (nav as HTMLElement).style.color = "white");
     }
   });
 </script>
