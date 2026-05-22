@@ -1,20 +1,33 @@
 ---
 // src/components/Hero.astro
-import { Image } from 'astro:assets';
-// REEMPLAZA ESTO CON TU FOTO PRINCIPAL
-import heroImage from '../assets/NOPE-VINO_02.png'; 
+import { client, urlFor } from '../lib/sanity';
+
+// Ejecutamos la query exacta para traer tus textos reales y la URL de la imagen
+const homeQuery = `*[_type == "homeSettings"][0] {
+  heroSub,
+  heroTitle,
+  "heroImageUrl": heroImage.asset->url
+}`;
+
+const homeData = await client.fetch(homeQuery);
+
+// Procesamos la imagen de Sanity con urlFor para asegurar compatibilidad total con Cloudflare
+const fondoHero = homeData?.heroImageUrl 
+  ? urlFor(homeData.heroImageUrl).width(1920).height(1080).fit('crop').format('webp').url()
+  : '';
 ---
 
 <section id="hero" class="relative min-h-screen w-full overflow-hidden bg-black flex items-end pb-24 md:pb-32">
   
   <div class="absolute inset-0 z-0 h-full w-full">
-    <Image 
-      src={heroImage} 
-      alt="VKMEN Colección Caracas Urbano" 
-      class="h-full w-full object-cover object-center"
-      quality={100}
-      format="webp"
-    />
+    {fondoHero && (
+      <img 
+        src={fondoHero} 
+        alt="VKMEN Colección" 
+        class="h-full w-full object-cover object-center"
+        loading="eager"
+      />
+    )}
     <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/70 z-10"></div>
   </div>
 
@@ -22,12 +35,14 @@ import heroImage from '../assets/NOPE-VINO_02.png';
     <div class="max-w-4xl" id="hero-content">
       
       <p class="font-body text-[11px] uppercase tracking-[0.4em] opacity-80 mb-4" id="hero-sub">
-        Urban Luxury • Caracas Collection
+        {homeData?.heroSub || "Urban Luxury • Caracas Collection"}
       </p>
 
-      <h1 class="font-heading text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" id="hero-title">
-        The Future is<br/>Modern.
-      </h1>
+      <h1 
+        class="font-heading text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.1] mb-10 uppercase" 
+        id="hero-title"
+        set:html={homeData?.heroTitle || "The Future is<br/>Modern."}
+      />
 
       <div class="flex flex-col sm:flex-row gap-6 mt-12" id="hero-actions">
         <a 
@@ -51,18 +66,17 @@ import heroImage from '../assets/NOPE-VINO_02.png';
 <script>
   import { gsap } from "gsap";
 
-  // Esperar a que el DOM esté listo
   window.addEventListener('DOMContentLoaded', () => {
     const tl = gsap.timeline({ defaults: { ease: "power3.out" }});
 
-    // Pequeña escala inicial en la imagen para efecto parallax o entrada
+    // Tu efecto de escala inicial sobre la imagen
     gsap.from("#hero img", {
       scale: 1.1,
       duration: 1.8,
       ease: "power2.out"
     });
 
-    // Entrada secuencial del contenido
+    // Tus animaciones secuenciales intactas
     tl.from("#hero-sub", { 
       opacity: 0, 
       y: 20, 
