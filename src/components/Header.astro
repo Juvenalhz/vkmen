@@ -1,7 +1,18 @@
 ---
 // src/components/Header.astro
-import { Image } from 'astro:assets';
-import logoPng from '../assets/VK_isotipo.png'; 
+import { client, urlFor } from '../lib/sanity';
+
+// 1. Consultamos el campo 'logoScroll' que definimos en tu Schema de Sanity
+const headerQuery = `*[_type == "homeSettings"][0] {
+  "logoScrollUrl": logoScroll.asset->url
+}`;
+
+const headerData = await client.fetch(headerQuery);
+
+// 2. Procesamos la imagen de Sanity con urlFor para asegurar compatibilidad total en Cloudflare
+const logoDeScroll = headerData?.logoScrollUrl 
+  ? urlFor(headerData.logoScrollUrl).width(150).fit('max').format('webp').url()
+  : '';
 ---
 
 <header id="main-header" class="fixed top-0 w-full z-50 py-6 transition-all duration-300 bg-transparent">
@@ -19,7 +30,14 @@ import logoPng from '../assets/VK_isotipo.png';
       </div>
 
       <div id="logo-iso-png" class="absolute opacity-0 scale-90 transition-all duration-300">
-        <Image src={logoPng} alt="VK Isotipo" class="h-10 w-auto object-contain" />
+        {logoDeScroll && (
+          <img 
+            src={logoDeScroll} 
+            alt="VK Isotipo" 
+            class="h-10 w-auto object-contain"
+            loading="eager"
+          />
+        )}
       </div>
     </div>
 
