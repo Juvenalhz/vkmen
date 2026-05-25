@@ -17,6 +17,7 @@ interface Product {
   variants: Variant[];
 }
 
+// 1. Extraemos los productos desde Sanity
 const productsQuery = `*[_type == "product" && count(variants[].availableSizes[]) > 0] {
   sku,
   name,
@@ -32,6 +33,7 @@ const productsQuery = `*[_type == "product" && count(variants[].availableSizes[]
 
 const products: Product[] = await client.fetch(productsQuery);
 
+// 2. Extraemos y formateamos las categorías dinámicamente de la BD
 const rawCategories = products.map(p => p.category).filter(Boolean);
 const uniqueCategories = [...new Set(rawCategories)];
 
@@ -69,6 +71,7 @@ const categories = [
         ? urlFor(defaultVariant.images[0]).width(600).height(800).fit('crop').format('webp').url()
         : '/placeholder.jpg';
 
+      // Agregado blindaje '|| []' en las variantes para evitar nulos en JSON.stringify
       const productDataJson = JSON.stringify({
         name: product.name,
         sku: product.sku,
@@ -76,7 +79,7 @@ const categories = [
         variants: product.variants.map((v: Variant) => ({
           colorName: v.colorName,
           colorHex: v.colorHex,
-          availableSizes: v.availableSizes,
+          availableSizes: v.availableSizes || [],
           images: v.images?.map((img: any) => urlFor(img).width(800).height(1000).fit('crop').format('webp').url()) || []
         }))
       });
@@ -110,7 +113,9 @@ const categories = [
                 const imgUrl = v.images?.[0] 
                   ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url()
                   : '';
-                const sizesString = v.availableSizes.join(' · ');
+                
+                // CONTROL DE ERRORES: Validación ternaria para el .join() de la grilla
+                const sizesString = v.availableSizes ? v.availableSizes.join(' · ') : 'Sin Tallas';
 
                 return (
                   <button 
@@ -126,8 +131,10 @@ const categories = [
                 );
               })}
             </div>
+            
+            {/* CONTROL DE ERRORES: Validación ternaria para el estado inicial de tallas */}
             <span id={`prod-sizes-${pIndex}`} class="text-[9px] font-bold tracking-widest text-neutral-500 font-mono">
-              {defaultVariant.availableSizes.join(' · ')}
+              {defaultVariant.availableSizes ? defaultVariant.availableSizes.join(' · ') : 'Agotado'}
             </span>
           </div>
         </div>
@@ -229,7 +236,7 @@ const categories = [
   const cartDrawer = document.getElementById('cart-drawer');
   const cartOverlay = document.getElementById('cart-overlay');
 
-  // --- 1. ESCUCHADOR REACTIVO (TIPADO CORRECTAMENTE) ---
+  // --- 1. ESCUCHADOR REACTIVO ---
   cartItems.subscribe((items: any[]) => {
     if (!floatingCartBtn || !floatingCartCount) return;
     
@@ -341,15 +348,18 @@ const categories = [
 
       activeProduct = JSON.parse(rawData);
       activeVariant = activeProduct.variants[0];
-      activeSize = activeVariant.availableSizes[0] || '';
+      
+      // BLINDAJE EXTRA: Validación de seguridad por si viene vacío desde la BD
+      const initialSizes = activeVariant?.availableSizes || [];
+      activeSize = initialSizes[0] || '';
 
       const updateModalContent = (variant: any) => {
         activeVariant = variant;
-        if (modalImg && variant.images?.[0]) modalImg.src = variant.images[0];
+        if (modalImg && variant?.images?.[0]) modalImg.src = variant.images[0];
         
         if (modalThumbnailsContainer && modalImgContainer) {
           modalThumbnailsContainer.innerHTML = '';
-          if (variant.images && variant.images.length > 1) {
+          if (variant?.images && variant.images.length > 1) {
             modalThumbnailsContainer.classList.remove('hidden');
             modalThumbnailsContainer.classList.add('flex');
             modalImgContainer.classList.add('pb-4');
@@ -385,11 +395,12 @@ const categories = [
 
         if (modalSizesContainer) {
           modalSizesContainer.innerHTML = '';
-          if (!variant.availableSizes.includes(activeSize)) {
-            activeSize = variant.availableSizes[0] || '';
+          const sizesList = variant?.availableSizes || [];
+          if (!sizesList.includes(activeSize)) {
+            activeSize = sizesList[0] || '';
           }
 
-          variant.availableSizes.forEach((size: string) => {
+          sizesList.forEach((size: string) => {
             const sizeBtn = document.createElement('button');
             sizeBtn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
               size === activeSize 
@@ -420,7 +431,7 @@ const categories = [
       
       if (modalColorsContainer) {
         modalColorsContainer.innerHTML = '';
-        activeProduct.variants.forEach((v: any, index: number) => {
+        activeProduct.variants?.forEach((v: any, index: number) => {
           const btn = document.createElement('button');
           btn.className = `w-6 h-6 rounded-full border border-neutral-300 block cursor-pointer transition-all ${index === 0 ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`;
           btn.style.backgroundColor = v.colorHex;
