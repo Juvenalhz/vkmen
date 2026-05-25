@@ -71,7 +71,7 @@ const categories = [
         ? urlFor(defaultVariant.images[0]).width(600).height(800).fit('crop').format('webp').url()
         : '/placeholder.jpg';
 
-      // Agregado blindaje '|| []' en las variantes para evitar nulos en JSON.stringify
+      // OPTIMIZACIÓN: Guardamos 'thumb' (imagen en caché) e 'images' (alta resolución)
       const productDataJson = JSON.stringify({
         name: product.name,
         sku: product.sku,
@@ -80,6 +80,7 @@ const categories = [
           colorName: v.colorName,
           colorHex: v.colorHex,
           availableSizes: v.availableSizes || [],
+          thumb: v.images?.[0] ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url() : '',
           images: v.images?.map((img: any) => urlFor(img).width(800).height(1000).fit('crop').format('webp').url()) || []
         }))
       });
@@ -114,7 +115,6 @@ const categories = [
                   ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url()
                   : '';
                 
-                // CONTROL DE ERRORES: Validación ternaria para el .join() de la grilla
                 const sizesString = v.availableSizes ? v.availableSizes.join(' · ') : 'Sin Tallas';
 
                 return (
@@ -132,7 +132,6 @@ const categories = [
               })}
             </div>
             
-            {/* CONTROL DE ERRORES: Validación ternaria para el estado inicial de tallas */}
             <span id={`prod-sizes-${pIndex}`} class="text-[9px] font-bold tracking-widest text-neutral-500 font-mono">
               {defaultVariant.availableSizes ? defaultVariant.availableSizes.join(' · ') : 'Agotado'}
             </span>
@@ -349,13 +348,29 @@ const categories = [
       activeProduct = JSON.parse(rawData);
       activeVariant = activeProduct.variants[0];
       
-      // BLINDAJE EXTRA: Validación de seguridad por si viene vacío desde la BD
       const initialSizes = activeVariant?.availableSizes || [];
       activeSize = initialSizes[0] || '';
 
+      // OPTIMIZACIÓN: Función de renderizado con estrategia de caché instantánea
       const updateModalContent = (variant: any) => {
         activeVariant = variant;
-        if (modalImg && variant?.images?.[0]) modalImg.src = variant.images[0];
+        
+        if (modalImg) {
+          // 1. Carga INMEDIATA desde la caché local del navegador
+          if (variant?.thumb) modalImg.src = variant.thumb;
+          
+          // 2. Carga asíncrona en segundo plano para la alta resolución
+          if (variant?.images?.[0]) {
+            const highResImage = new Image();
+            highResImage.src = variant.images[0];
+            highResImage.onload = () => {
+              // Solo la reemplaza si el usuario no cambió de variante de color en el proceso
+              if (activeVariant === variant) {
+                modalImg.src = variant.images[0];
+              }
+            };
+          }
+        }
         
         if (modalThumbnailsContainer && modalImgContainer) {
           modalThumbnailsContainer.innerHTML = '';
