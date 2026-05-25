@@ -146,8 +146,18 @@ const categories = [
       </button>
 
       <div id="modal-img-container" class="w-full md:w-1/2 bg-neutral-50 flex flex-col justify-between border-b md:border-b-0 md:border-r border-neutral-100 transition-all duration-300">
-        <div class="w-full h-[380px] md:h-[480px] overflow-hidden">
-          <img id="modal-img" src="" alt="" class="w-full h-full object-cover object-center transition-all duration-300">
+        <div class="w-full h-[380px] md:h-[480px] overflow-hidden relative group/zoom">
+          <img 
+            id="modal-img" 
+            src="" 
+            alt="" 
+            class="w-full h-full object-cover object-center transition-all duration-300 cursor-zoom-in"
+          >
+          <div class="absolute bottom-3 right-3 bg-black/40 text-white pointer-events-none p-1.5 rounded-full backdrop-blur-sm opacity-0 group-hover/zoom:opacity-100 transition-opacity">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637zM10.5 7.5v6m3-3h-6" />
+            </svg>
+          </div>
         </div>
         <div id="modal-thumbnails-container" class="hidden gap-2 px-4 mt-3 overflow-x-auto no-scrollbar justify-start"></div>
       </div>
@@ -166,7 +176,7 @@ const categories = [
           </div>
 
           <div>
-            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Tallas disponibles</p>
+            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Selecciona tu talla</p>
             <div id="modal-sizes-container" class="flex flex-wrap gap-2"></div>
           </div>
         </div>
@@ -185,6 +195,17 @@ const categories = [
 
     </div>
   </div>
+
+  <div id="image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/95 backdrop-blur-md cursor-zoom-out select-none">
+    <button id="close-lightbox" class="absolute top-6 right-6 p-3 text-white/70 hover:text-white transition-colors cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <div class="max-w-[95vw] max-h-[90vh] flex items-center justify-center">
+      <img id="lightbox-img" src="" alt="VKMEN Detalle Expandido" class="max-w-full max-h-[85vh] object-contain shadow-2xl transition-transform duration-300 ease-out">
+    </div>
+  </div>
 </section>
 
 <style>
@@ -193,7 +214,7 @@ const categories = [
 </style>
 
 <script>
-  // --- PARTE 1: FILTRADO DE CATEGORÍAS (Sin cambios) ---
+  // --- FILTRADO DE CATEGORÍAS ---
   const catButtons = document.querySelectorAll('[data-category-btn]');
   const productCards = document.querySelectorAll('[data-product-card]');
   const allBtn = document.querySelector('[data-category-btn="all"]');
@@ -222,7 +243,7 @@ const categories = [
     });
   });
 
-  // --- PARTE 2: INTERACTIVIDAD DE COLORES EN LA GRILLA (Sin cambios) ---
+  // --- INTERACTIVIDAD DE COLORES EN LA GRILLA ---
   const colorButtons = document.querySelectorAll('[data-color-select]');
   colorButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -249,12 +270,12 @@ const categories = [
     });
   });
 
-  // --- PARTE 3: LÓGICA DEL MODAL INTERNO CORREGIDA PARA ELIMINAR BARRA BLANCA ---
+  // --- LÓGICA DEL MODAL INTERNO ACTUALIZADA (INTERACTIVIDAD DE TALLAS) ---
   const openModalElements = document.querySelectorAll('[data-open-modal]');
   const modal = document.getElementById('product-modal');
   const closeModalBtn = document.getElementById('close-modal');
   
-  const modalImgContainer = document.getElementById('modal-img-container'); // Nuevo selector
+  const modalImgContainer = document.getElementById('modal-img-container');
   const modalImg = document.getElementById('modal-img') as HTMLImageElement;
   const modalSku = document.getElementById('modal-sku');
   const modalTitle = document.getElementById('modal-title');
@@ -263,6 +284,9 @@ const categories = [
   const modalSizesContainer = document.getElementById('modal-sizes-container');
   const modalThumbnailsContainer = document.getElementById('modal-thumbnails-container');
   const modalWhatsappBtn = document.getElementById('modal-whatsapp-btn') as HTMLAnchorElement;
+
+  const lightbox = document.getElementById('image-lightbox');
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
 
   openModalElements.forEach(element => {
     element.addEventListener('click', () => {
@@ -273,19 +297,27 @@ const categories = [
 
       const product = JSON.parse(rawData);
       let currentVariant = product.variants[0];
+      let selectedSize = currentVariant.availableSizes[0] || ''; // Guardamos la talla seleccionada
+
+      // Función unificada para construir el mensaje dinámico de WhatsApp
+      const updateWhatsappLink = (variant: any, size: string) => {
+        if (modalWhatsappBtn) {
+          const text = `Hola VKMEN, me interesa el artículo: ${product.name} (SKU: ${product.sku}) en Color: ${variant.colorName} y Talla: ${size}. ¿Tienen disponibilidad?`;
+          modalWhatsappBtn.href = `https://wa.me/584124507289?text=${encodeURIComponent(text)}`;
+        }
+      };
 
       const updateModalContent = (variant: any) => {
+        currentVariant = variant; // Actualizar la variante global del contexto del modal
         if (modalImg && variant.images?.[0]) modalImg.src = variant.images[0];
         
-        // CORRECCIÓN CLAVE: Lógica para mostrar/ocultar galería y padding
+        // Manejo de miniaturas de imágenes
         if (modalThumbnailsContainer && modalImgContainer) {
           modalThumbnailsContainer.innerHTML = '';
-          
           if (variant.images && variant.images.length > 1) {
-            // Múltiples fotos: Mostrar carrusel y padding inferior
             modalThumbnailsContainer.classList.remove('hidden');
             modalThumbnailsContainer.classList.add('flex');
-            modalImgContainer.classList.add('pb-4'); // Activamos padding para que respire
+            modalImgContainer.classList.add('pb-4');
 
             variant.images.forEach((imgUrl: string, idx: number) => {
               const thumbBtn = document.createElement('button');
@@ -310,27 +342,53 @@ const categories = [
               modalThumbnailsContainer.appendChild(thumbBtn);
             });
           } else {
-            // Una sola foto: Ocultar carrusel y quitar padding
             modalThumbnailsContainer.classList.remove('flex');
             modalThumbnailsContainer.classList.add('hidden');
-            modalImgContainer.classList.remove('pb-4'); // Eliminamos padding para que la foto llegue al borde
+            modalImgContainer.classList.remove('pb-4');
           }
         }
 
+        // NUEVO: Renderizado de Tallas como Botones Clickeables
         if (modalSizesContainer) {
           modalSizesContainer.innerHTML = '';
+          
+          // Al cambiar de color, nos aseguramos de que la talla previa exista en el nuevo color. Si no, agarra la primera por defecto.
+          if (!variant.availableSizes.includes(selectedSize)) {
+            selectedSize = variant.availableSizes[0] || '';
+          }
+
           variant.availableSizes.forEach((size: string) => {
-            const span = document.createElement('span');
-            span.className = 'border border-neutral-200 px-3 py-1.5 text-xs font-mono font-bold text-neutral-700 bg-neutral-50';
-            span.textContent = size;
-            modalSizesContainer.appendChild(span);
+            const sizeBtn = document.createElement('button');
+            sizeBtn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+              size === selectedSize 
+                ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm' 
+                : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+            }`;
+            sizeBtn.textContent = size;
+            
+            // Evento click para cambiar de talla de forma interactiva
+            sizeBtn.addEventListener('click', () => {
+              selectedSize = size;
+              // Limpiamos los estilos de los demás botones de talla
+              const allSizeBtns = modalSizesContainer.querySelectorAll('button');
+              allSizeBtns.forEach(b => {
+                b.classList.remove('border-neutral-900', 'bg-neutral-900', 'text-white');
+                b.classList.add('border-neutral-200', 'bg-neutral-50', 'text-neutral-700');
+              });
+              // Aplicamos el estilo activo al clickeado
+              sizeBtn.classList.remove('border-neutral-200', 'bg-neutral-50', 'text-neutral-700');
+              sizeBtn.classList.add('border-neutral-900', 'bg-neutral-900', 'text-white');
+              
+              // Actualizamos el string del botón de WhatsApp
+              updateWhatsappLink(currentVariant, selectedSize);
+            });
+
+            modalSizesContainer.appendChild(sizeBtn);
           });
         }
 
-        if (modalWhatsappBtn) {
-          const text = `Hola VKMEN, me interesa el artículo: ${product.name} (SKU: ${product.sku}) en Color: ${variant.colorName}. ¿Tienen disponibilidad?`;
-          modalWhatsappBtn.href = `https://wa.me/584241234567?text=${encodeURIComponent(text)}`;
-        }
+        // Actualización inicial del link al cargar contenido
+        updateWhatsappLink(currentVariant, selectedSize);
       };
 
       if (modalSku) modalSku.textContent = `SKU: ${product.sku}`;
@@ -356,15 +414,45 @@ const categories = [
         });
       }
 
+      // Inicializar modal con la variante por defecto
+      selectedSize = currentVariant.availableSizes[0] || '';
       updateModalContent(currentVariant);
       modal.style.display = 'flex';
     });
   });
 
+  // --- LÓGICA DEL LIGHTBOX ---
+  if (modalImg && lightbox && lightboxImg) {
+    modalImg.addEventListener('click', () => {
+      if (modalImg.src) {
+        lightboxImg.src = modalImg.src;
+        lightbox.classList.remove('hidden');
+        lightbox.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+    });
+  }
+
+  if (lightbox) {
+    lightbox.addEventListener('click', () => {
+      lightbox.classList.remove('flex');
+      lightbox.classList.add('hidden');
+      if (modal && modal.style.display === 'none') {
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
   if (closeModalBtn && modal) {
-    closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+    closeModalBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    });
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.style.display = 'none';
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
     });
   }
 </script>
