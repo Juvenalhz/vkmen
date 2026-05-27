@@ -17,31 +17,42 @@ interface Product {
   variants: Variant[];
 }
 
-// 1. Extraemos los productos desde Sanity
-const productsQuery = `*[_type == "product" && count(variants[].availableSizes[]) > 0] {
-  sku,
-  name,
-  category,
-  price,
-  variants[] {
-    colorName,
-    "colorHex": hex.hex,
-    availableSizes,
-    images[] { asset->{ url } }
+// 1. Extraemos los productos Y el isotipo institucional en una sola petición
+const dataQuery = `{
+  "products": *[_type == "product" && count(variants[].availableSizes[]) > 0] {
+    sku,
+    name,
+    category,
+    price,
+    variants[] {
+      colorName,
+      "colorHex": hex.hex,
+      availableSizes,
+      images[] { asset->{ url } }
+    }
+  },
+  "storeSettings": *[_type == "siteSettings"][0] {
+    isotipo { asset->{ url } }
   }
 }`;
 
-const products: Product[] = await client.fetch(productsQuery);
+const { products, storeSettings } = await client.fetch(dataQuery);
 
-// 2. Extraemos y formateamos las categorías dinámicamente de la BD
-const rawCategories = products.map(p => p.category).filter(Boolean);
+// 2. Definimos el Isotipo de VKMEN como la imagen de respaldo global
+// Usamos .fit('fill') y bg('FFFFFF') para centrar el logo limpiamente en el formato vertical
+const vkmenIsotipo = storeSettings?.isotipo?.asset
+  ? urlFor(storeSettings.isotipo).width(600).height(800).fit('fill').bg('FFFFFF').format('webp').url()
+  : '/placeholder.jpg'; // Respaldo local por si acaso
+
+// 3. Extraemos y formateamos las categorías dinámicamente de la BD con tipado explícito
+const rawCategories = products.map((p: any) => p.category).filter(Boolean);
 const uniqueCategories = [...new Set(rawCategories)];
 
 const categories = [
   { title: 'Todos', value: 'all' },
-  ...uniqueCategories.map(cat => ({
-    title: cat.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-    value: cat
+  ...uniqueCategories.map((cat: any) => ({
+    title: String(cat).split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+    value: String(cat)
   }))
 ];
 ---
@@ -66,23 +77,31 @@ const categories = [
 
   <div class="grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
     {products.map((product: Product, pIndex: number) => {
-      const defaultVariant = product.variants[0];
-      const defaultImage = defaultVariant?.images?.[0] 
+      const defaultVariant = product.variants?.[0];
+      
+      // BLINDAJE 1: Si no hay asset de imagen en el producto, inyectamos el Isotipo de VKMEN
+      const defaultImage = (defaultVariant?.images?.[0]?.asset) 
         ? urlFor(defaultVariant.images[0]).width(600).height(800).fit('crop').format('webp').url()
-        : '/placeholder.jpg';
+        : vkmenIsotipo;
 
-      // Estructuramos el JSON para alimentar la reactividad interna del modal
+      // Estructuramos el JSON blindando el mapeo interno de imágenes para el modal dinámico
       const productDataJson = JSON.stringify({
         name: product.name,
         sku: product.sku,
         price: product.price,
-        variants: product.variants.map((v: Variant) => ({
-          colorName: v.colorName,
-          colorHex: v.colorHex,
-          availableSizes: v.availableSizes || [],
-          thumb: v.images?.[0] ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url() : '',
-          images: v.images?.map((img: any) => urlFor(img).width(800).height(1000).fit('crop').format('webp').url()) || []
-        }))
+        variants: (product.variants || []).map((v: Variant) => {
+          const validImages = (v.images || []).filter(img => img && img.asset);
+          
+          return {
+            colorName: v.colorName,
+            colorHex: v.colorHex,
+            availableSizes: v.availableSizes || [],
+            thumb: validImages[0] ? urlFor(validImages[0]).width(600).height(800).fit('crop').format('webp').url() : vkmenIsotipo,
+            images: validImages.length > 0 
+              ? validImages.map((img: any) => urlFor(img).width(800).height(1000).fit('crop').format('webp').url())
+              : [vkmenIsotipo]
+          };
+        })
       });
 
       return (
@@ -111,10 +130,10 @@ const categories = [
 
           <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
             <div class="flex gap-2.5">
-              {product.variants.map((v: Variant, vIndex: number) => {
-                const imgUrl = v.images?.[0] 
+              {(product.variants || []).map((v: Variant, vIndex: number) => {
+                const imgUrl = (v.images?.[0]?.asset) 
                   ? urlFor(v.images[0]).width(600).height(800).fit('crop').format('webp').url()
-                  : '';
+                  : vkmenIsotipo;
                 
                 const sizesString = (v && v.availableSizes && Array.isArray(v.availableSizes)) 
                   ? v.availableSizes.join(' · ') 
@@ -210,7 +229,7 @@ const categories = [
     </div>
   </div>
 
-  <button 
+  <div 
     id="floating-cart-btn" 
     class="fixed bottom-6 right-6 z-40 bg-neutral-900 text-white p-4 rounded-full shadow-xl transition-all duration-300 transform translate-y-20 opacity-0 scale-90 hover:bg-neutral-800 hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
     title="Ver mi bolsa de compras"
@@ -224,7 +243,7 @@ const categories = [
     >
       0
     </span>
-  </button>
+  </div>
 </section>
 
 <style>
@@ -235,10 +254,11 @@ const categories = [
 <script>
   import { cartItems, addCartItem } from '../store/cartStore.js';
 
-  const floatingCartBtn = document.getElementById('floating-cart-btn');
-  const floatingCartCount = document.getElementById('floating-cart-count');
-  const cartDrawer = document.getElementById('cart-drawer');
-  const cartOverlay = document.getElementById('cart-overlay');
+  // Usamos as HTMLElement para mitigar el error de tipo 'never' o elementos nulos en TypeScript
+  const floatingCartBtn = document.getElementById('floating-cart-btn') as HTMLElement | null;
+  const floatingCartCount = document.getElementById('floating-cart-count') as HTMLElement | null;
+  const cartDrawer = document.getElementById('cart-drawer') as HTMLElement | null;
+  const cartOverlay = document.getElementById('cart-overlay') as HTMLElement | null;
 
   // --- 1. ESCUCHADOR REACTIVO DEL CARRITO ---
   cartItems.subscribe((items: any[]) => {
@@ -294,7 +314,7 @@ const categories = [
     });
   });
 
-  // --- 3. CAMBIO DE COLOR EN LA GRILLA CON TRANSICIÓN FLUIDA ---
+  // --- 3. CAMBIO DE COLOR EN LA GRILLA ---
   const colorButtons = document.querySelectorAll('[data-color-select]');
   colorButtons.forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -330,18 +350,16 @@ const categories = [
     });
   });
 
-  // --- 4. PRECARGA AGRESIVA ULTRA-RÁPIDA (GRILLA + MODALES + MINIATURAS) ---
+  // --- 4. PRECARGA AGRESIVA ---
   const executeUltraPreload = () => {
-    // A) Precargar imágenes primarias asociadas a la grilla
     colorButtons.forEach(btn => {
       const imgSrc = btn.getAttribute('data-img-src');
-      if (imgSrc) {
+      if (imgSrc && !imgSrc.includes('placeholder')) {
         const img = new Image();
         img.src = imgSrc;
       }
     });
 
-    // B) Extraer y almacenar en caché de inmediato todas las galerías de los modales internos
     const openModalElements = document.querySelectorAll('[data-open-modal]');
     openModalElements.forEach(element => {
       const rawData = element.getAttribute('data-product-info');
@@ -349,9 +367,9 @@ const categories = [
       try {
         const product = JSON.parse(rawData);
         product.variants?.forEach((v: any) => {
-          if (v.thumb) { const i = new Image(); i.src = v.thumb; }
+          if (v.thumb && !v.thumb.includes('placeholder')) { const i = new Image(); i.src = v.thumb; }
           v.images?.forEach((imgUrl: string) => {
-            if (imgUrl) { const i = new Image(); i.src = imgUrl; }
+            if (imgUrl && !imgUrl.includes('placeholder')) { const i = new Image(); i.src = imgUrl; }
           });
         });
       } catch (err) {}
@@ -367,23 +385,23 @@ const categories = [
     }
   }
 
-  // --- 5. LÓGICA REFACTORIZADA DEL MODAL INTERNO ---
+  // --- 5. LÓGICA DEL MODAL ---
   const openModalElements = document.querySelectorAll('[data-open-modal]');
-  const modal = document.getElementById('product-modal');
-  const closeModalBtn = document.getElementById('close-modal');
+  const modal = document.getElementById('product-modal') as HTMLElement | null;
+  const closeModalBtn = document.getElementById('close-modal') as HTMLElement | null;
   
-  const modalImgContainer = document.getElementById('modal-img-container');
-  const modalImg = document.getElementById('modal-img') as HTMLImageElement;
-  const modalSku = document.getElementById('modal-sku');
-  const modalTitle = document.getElementById('modal-title');
-  const modalPrice = document.getElementById('modal-price');
-  const modalColorsContainer = document.getElementById('modal-colors-container');
-  const modalSizesContainer = document.getElementById('modal-sizes-container');
-  const modalThumbnailsContainer = document.getElementById('modal-thumbnails-container');
-  const addToCartBtn = document.getElementById('modal-add-to-cart-btn') as HTMLButtonElement;
+  const modalImgContainer = document.getElementById('modal-img-container') as HTMLElement | null;
+  const modalImg = document.getElementById('modal-img') as HTMLImageElement | null;
+  const modalSku = document.getElementById('modal-sku') as HTMLElement | null;
+  const modalTitle = document.getElementById('modal-title') as HTMLElement | null;
+  const modalPrice = document.getElementById('modal-price') as HTMLElement | null;
+  const modalColorsContainer = document.getElementById('modal-colors-container') as HTMLElement | null;
+  const modalSizesContainer = document.getElementById('modal-sizes-container') as HTMLElement | null;
+  const modalThumbnailsContainer = document.getElementById('modal-thumbnails-container') as HTMLElement | null;
+  const addToCartBtn = document.getElementById('modal-add-to-cart-btn') as HTMLButtonElement | null;
 
-  const lightbox = document.getElementById('image-lightbox');
-  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
+  const lightbox = document.getElementById('image-lightbox') as HTMLElement | null;
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement | null;
 
   let activeProduct: any = null;
   let activeVariant: any = null;
@@ -554,7 +572,7 @@ const categories = [
     }, 800);
   });
 
-  // --- 6. LIGHTBOX DE IMÁGENES ---
+  // --- 6. LIGHTBOX ---
   if (modalImg && lightbox && lightboxImg) {
     modalImg.addEventListener('click', () => {
       if (modalImg.src) {
