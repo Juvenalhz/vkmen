@@ -1,0 +1,15 @@
+# Cloudflare Pages — Astro estático (sin Workers/KV).
+# El error 10014 aparece cuando Wrangler intenta CREAR un KV que ya existe.
+# Este proyecto no usa KV; no declares [[kv_namespaces]] aquí.
+#
+# En el dashboard (Pages → Settings → Build):
+#   Build command:     npm run build
+#   Output directory:  dist
+#   Deploy command:    (vacío — no uses "npx wrangler deploy" salvo que uses SSR)
+#
+# https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/
+
+name = "vkmen"
+account_id = "d9e84edf7265726d46e2c432e06e4112"
+compatibility_date = "2025-04-01"
+pages_build_output_dir = "./dist"
