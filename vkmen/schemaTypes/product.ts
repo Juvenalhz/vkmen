@@ -63,6 +63,21 @@ export default defineType({
       description: 'Activa este interruptor para que aparezca en la página de inicio como tendencia.',
       initialValue: false,
     }),
+    /* --- CAMBIO REALIZADO: Campo de Orden --- */
+    defineField({
+      name: 'order',
+      title: 'Prioridad (Orden)',
+      type: 'number',
+      description: 'Número para ordenar. Los números bajos aparecerán primero (Ej: 1 = Top, 100 = Último).',
+      initialValue: 100,
+    }),
+    defineField({
+      name: 'orderRank',
+      title: 'Order Rank',
+      type: 'string',
+      hidden: true, // Esto oculta el campo para que no moleste en la edición
+    }),
+    /* ---------------------------------------- */
     defineField({
       name: 'variants',
       title: 'Variantes de Color e Inventario',
@@ -108,7 +123,7 @@ export default defineType({
                 },
               ],
               options: {
-                layout: 'tags', // Organiza las opciones seleccionadas como etiquetas limpias
+                layout: 'tags',
               },
             }),
             defineField({

@@ -19,7 +19,7 @@ interface Product {
 
 // 1. Extraemos los productos Y el isotipo institucional en una sola petición
 const dataQuery = `{
-  "products": *[_type == "product" && count(variants[].availableSizes[]) > 0] {
+  "products": *[_type == "product" && count(variants[].availableSizes[]) > 0] | order(orderRank asc) {
     sku,
     name,
     category,
