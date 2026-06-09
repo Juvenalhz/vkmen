@@ -26,18 +26,18 @@ const fondoHero = homeData?.heroImageUrl
         loading="eager"
       />
     )}
-    <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/95 z-10"></div>
   </div>
 
   <div class="container mx-auto px-6 relative z-20 text-white w-full">
     <div class="max-w-4xl" id="hero-content">
       
-      <p class="font-body text-[9px] md:text-[11px] uppercase tracking-[0.5em] opacity-80 mb-2 md:mb-4 shadow-premium" id="hero-sub">
+      <p class="font-body text-[8px] md:text-[10px] font-extrabold uppercase tracking-[0.6em] opacity-90 mb-2 md:mb-4 shadow-premium" id="hero-sub">
         {homeData?.heroSub || "Urban Luxury • Caracas"}
       </p>
 
       <h1 
-        class="font-heading text-2xl sm:text-3xl md:text-7xl lg:text-8xl tracking-[0.05em] leading-[1.2] md:leading-[1.1] uppercase shadow-premium" 
+        class="font-heading text-2xl sm:text-3xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-[1.2] md:leading-[1.1] uppercase shadow-premium" 
         id="hero-title"
         set:html={homeData?.heroTitle || "The Future is<br/>Modern."}
       />
@@ -65,6 +65,10 @@ const fondoHero = homeData?.heroImageUrl
 
 <style>
   .shadow-premium {
-    text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.2);
+    /* Sombra multi-capa optimizada para reforzar el contraste de las letras individuales */
+    text-shadow: 
+      0px 4px 20px rgba(0, 0, 0, 0.7), 
+      0px 2px 4px rgba(0, 0, 0, 0.5),
+      0px 0px 1px rgba(0, 0, 0, 0.6);
   }
 </style>
