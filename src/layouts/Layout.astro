@@ -1,21 +1,41 @@
 ---
 // src/layouts/Layout.astro
-import '../styles/global.css'; // <--- ¡AQUÍ ESTÁ LA MAGIA QUE ACTIVA TAILWIND!
+import '../styles/global.css';
+import { client, urlFor } from '../lib/sanity'; // <--- Importación de tu cliente Sanity
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+
+// Consulta exacta alineada con la estructura de tu negocio
+const settingsQuery = `*[_type == "homeSettings"][0] {
+  "logoScrollUrl": logoScroll.asset->url
+}`;
+
+const settingsData = await client.fetch(settingsQuery);
+
+// Procesamos el isotipo de Sanity para que sirva de Favicon optimizado
+const faviconUrl = settingsData?.logoScrollUrl 
+  ? urlFor(settingsData.logoScrollUrl).width(64).height(64).format('png').url()
+  : '';
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="VKMEN " />
+    <meta name="description" content="VKMEN" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/src/assets/VK_isotipo.png" />
+    
+    {faviconUrl ? (
+      <link rel="icon" type="image/png" href={faviconUrl} />
+    ) : (
+      // Respaldo local por si acaso falla la red durante el build
+      <link rel="icon" type="image/png" href="/favicon.png" />
+    )}
+    
     <title>{title}</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
