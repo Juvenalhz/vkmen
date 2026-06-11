@@ -5,35 +5,59 @@ const currentYear = new Date().getFullYear();
 const whatsappNumber = "584124507289";
 const whatsappLink = `https://wa.me/${whatsappNumber}?text=Hola%20VKMEN!%20Vengo%20desde%20la%20p%C3%A1gina%20web%20y%20quiero%20m%C3%A1s%20informaci%C3%B3n.`;
 const instagramLink = "https://instagram.com/vkmenvzla";
+const googleMapsLink = "https://share.google/h3MhKAotTSeYTnZRa"; 
 ---
 
 <footer class="w-full bg-neutral-950 text-white pt-20 pb-12 border-t border-neutral-900 font-body">
   <div class="container mx-auto px-6">
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-12 gap-x-8 pb-16 border-b border-neutral-900">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-12 gap-x-8 pb-16 border-b border-neutral-900">
       
       <div class="flex flex-col space-y-4">
         <h3 class="font-heading text-xl tracking-[0.15em] uppercase">VK MEN</h3>
         <p class="text-[11px] tracking-widest text-neutral-400 uppercase leading-relaxed max-w-sm">
-          Urban luxury and essential pieces for the modern man. Crafted for character.
+          Tu estilo <span class="opacity-40">•</span> Nuestro sello
         </p>
       </div>
 
-      <div class="flex flex-col space-y-3 md:items-end">
+      <div class="flex flex-col space-y-3 items-start md:items-end justify-start">
         <div class="w-full md:w-auto flex flex-col space-y-3">
-          <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">Connect</h4>
-          <ul class="space-y-2 text-[11px] uppercase tracking-[0.15em] text-neutral-300">
+          <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold md:text-right">Contacto</h4>
+          <ul class="space-y-2 text-[11px] uppercase tracking-[0.15em] text-neutral-300 md:text-right">
             <li>
-              <a href={instagramLink} target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center space-x-2 cursor-pointer">
+              <a href={instagramLink} target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center justify-start md:justify-end space-x-2 cursor-pointer">
                 <span>Instagram</span>
               </a>
             </li>
             <li>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center space-x-2 cursor-pointer">
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" class="hover:text-white transition opacity-80 hover:opacity-100 flex items-center justify-start md:justify-end space-x-2 cursor-pointer">
                 <span>WhatsApp Business</span>
               </a>
             </li>
           </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col space-y-3 md:items-end">
+        <h4 class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold md:text-right">Tienda</h4>
+        
+        <p class="text-[10px] tracking-[0.15em] text-neutral-400 uppercase md:text-right max-w-xs leading-relaxed">
+          Quinta Los Bambúes, Los Chorros, Caracas
+        </p>
+        
+        <div class="pt-1">
+          <a 
+            href={googleMapsLink} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="inline-flex items-center space-x-2 border border-neutral-800 hover:border-neutral-500 bg-transparent hover:bg-neutral-900 text-neutral-400 hover:text-white text-[10px] uppercase tracking-[0.2em] px-4 py-2.5 transition-all duration-300 rounded-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
+            <span>Abrir GPS</span>
+          </a>
         </div>
       </div>
 
@@ -46,7 +70,7 @@ const instagramLink = "https://instagram.com/vkmenvzla";
       <div class="flex space-x-6">
         <span>Caracas, VE</span>
         <span class="opacity-40">•</span>
-        <span>Designed with Code</span>
+        <span>Designed for Vkmen</span>
       </div>
     </div>
 
