@@ -36,7 +36,7 @@ export default defineConfig({
           ]);
       },
     }),
-    colorInput(),
+    colorInput() as any,
     media()
   ],
 

@@ -9,7 +9,8 @@
     "deploy": "sanity deploy",
     "deploy-graphql": "sanity graphql deploy",
     "dev": "sanity dev",
-    "start": "sanity start"
+    "start": "sanity start",
+    "sync-sizes": "tsx scripts/syncSizes.ts"
   },
   "keywords": [
     "sanity"
@@ -17,18 +18,21 @@
   "dependencies": {
     "@sanity/client": "^7.22.0",
     "@sanity/orderable-document-list": "^2.0.0",
-    "@sanity/vision": "^5.26.0",
+    "@sanity/vision": "^5.31.1",
+    "dotenv": "^17.4.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "sanity": "^5.26.0",
+    "sanity": "^5.31.1",
     "sanity-plugin-media": "^4.3.0",
-    "styled-components": "^6.1.18"
+    "styled-components": "^6.1.18",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@sanity/eslint-config-studio": "^6.0.0",
     "@types/react": "^19.2.14",
     "eslint": "^9.28",
     "prettier": "^3.5",
+    "tsx": "^4.22.4",
     "typescript": "^5.8"
   },
   "prettier": {
