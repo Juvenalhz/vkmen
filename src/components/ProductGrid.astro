@@ -24,7 +24,7 @@ const dataQuery = `{
     name,
     category,
     price,
-    variants[] {
+    variants[count(availableSizes) > 0] {
       colorName,
       "colorHex": hex.hex,
       availableSizes,
@@ -37,6 +37,24 @@ const dataQuery = `{
 }`;
 
 const { products, storeSettings } = await client.fetch(dataQuery);
+
+// Ordenar las tallas en el orden lógico (S, M, L, XL) globalmente para que afecte todo el frontend
+const sizeOrder = ['S', 'M', 'L', 'XL'];
+products.forEach((product: Product) => {
+  product.variants?.forEach((variant: Variant) => {
+    if (Array.isArray(variant.availableSizes)) {
+      variant.availableSizes.sort((a, b) => {
+        const iA = sizeOrder.indexOf(a);
+        const iB = sizeOrder.indexOf(b);
+        if (iA !== -1 && iB !== -1) return iA - iB;
+        if (iA !== -1) return -1;
+        if (iB !== -1) return 1;
+        return a.localeCompare(b); // fallback para tallas como 'XXL' o números
+      });
+    }
+  });
+});
+
 
 // 2. Definimos el Isotipo de VKMEN como la imagen de respaldo global
 const vkmenIsotipo = storeSettings?.isotipo?.asset
