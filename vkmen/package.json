@@ -10,6 +10,7 @@
     "deploy-graphql": "sanity graphql deploy",
     "dev": "sanity dev",
     "start": "sanity start",
+    "audit-sizes": "tsx scripts/auditMatch.ts",
     "sync-sizes": "tsx scripts/syncSizes.ts"
   },
   "keywords": [

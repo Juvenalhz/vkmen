@@ -3,6 +3,8 @@ import * as xlsx from 'xlsx';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
+import { exec } from 'child_process';
+import * as os from 'os';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -64,6 +66,30 @@ async function main() {
 
   const missingSkus: string[] = [];
   const colorMismatches: string[] = [];
+  const missingInSanity: string[] = [];
+
+  const sanitySkus = sanityProducts.map((p: any) => p.sku.trim());
+  for (const excelSku of Object.keys(inventoryBySku)) {
+    if (!sanitySkus.includes(excelSku)) {
+      const excelRow = rows.find(r => r.SKU && r.SKU.trim() === excelSku && r.Tipo === 'Item');
+      
+      // Ignorar si no hay unidades en inventario
+      const quantity = excelRow ? (parseInt(excelRow.Cantidad) || 0) : 0;
+      
+      // Excluir bolsas, cajas y OC
+      const name = excelRow ? (excelRow.Nombre || '').toLowerCase() : '';
+      const category = excelRow ? (excelRow.Categoria || '').toUpperCase() : '';
+      const skuUpper = excelSku.toUpperCase();
+      const isStoreOnly = 
+        name.includes('bolsa') || name.includes('caja') || 
+        skuUpper.startsWith('OC') || 
+        category === 'BOLSAS' || category === 'CAJAS' || category === 'OC';
+
+      if (quantity > 0 && !isStoreOnly) {
+        missingInSanity.push(`- **SKU**: ${excelSku} (${excelRow ? excelRow.Nombre : 'Nombre desconocido'}) - Qty: ${quantity}`);
+      }
+    }
+  }
 
   for (const product of sanityProducts) {
     const cleanSku = product.sku.trim();
@@ -105,6 +131,11 @@ async function main() {
   report += missingSkus.length > 0 ? missingSkus.join('\n') : "¡Excelente! Todos los productos de Sanity existen en el Excel.";
   report += `\n\n`;
 
+  report += `## 📦 Productos en Excel sin registro en Sanity (${missingInSanity.length})\n`;
+  report += `Estos productos existen en tu sistema administrativo pero no se encontraron en tu página web. Podrías haber olvidado subirlos.\n\n`;
+  report += missingInSanity.length > 0 ? missingInSanity.join('\n') : "¡Felicidades! Todos tus productos físicos están publicados en la web.";
+  report += `\n\n`;
+
   report += `## ⚠️ Discrepancias de Colores (${colorMismatches.length})\n`;
   report += `Para estos productos, el SKU existe en ambos lados, pero el nombre del color en Sanity no hace "match" con los colores en el Excel. Sus tallas NO se están actualizando.\n\n`;
   report += colorMismatches.length > 0 ? colorMismatches.join('\n') : "¡Perfecto! Todos los colores coinciden exactamente.";
@@ -112,6 +143,16 @@ async function main() {
   const reportPath = path.resolve(__dirname, '../../../reporte_inventario.md');
   fs.writeFileSync(reportPath, report);
   console.log(`✅ Reporte generado en: ${reportPath}`);
+
+  // Abrir automaticamente
+  const platform = os.platform();
+  if (platform === 'darwin') {
+    exec(`open "${reportPath}"`);
+  } else if (platform === 'win32') {
+    exec(`start "" "${reportPath}"`);
+  } else {
+    exec(`xdg-open "${reportPath}"`);
+  }
 }
 
 main().catch(console.error);
