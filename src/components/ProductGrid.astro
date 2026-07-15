@@ -80,15 +80,23 @@ const categories = [
     <h3 class="text-xs font-bold tracking-[0.2em] uppercase text-neutral-800 whitespace-nowrap">
       Colecciones
     </h3>
-    <div class="flex overflow-x-auto md:justify-end gap-6 md:gap-10 no-scrollbar pb-1 md:pb-0 w-full md:w-auto">
-      {categories.map((cat) => (
-        <button
-          data-category-btn={cat.value}
-          class="text-xs font-medium tracking-[0.15em] uppercase pb-2 border-b border-transparent text-neutral-400 hover:text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer"
-        >
-          {cat.title}
-        </button>
-      ))}
+    <div class="relative w-full md:w-auto overflow-hidden">
+      <div class="flex overflow-x-auto md:justify-end gap-6 md:gap-10 no-scrollbar pb-1 md:pb-0 w-full pr-8 md:pr-0">
+        {categories.map((cat) => (
+          <button
+            data-category-btn={cat.value}
+            class="text-xs font-medium tracking-[0.15em] uppercase pb-2 border-b border-transparent text-neutral-400 hover:text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0"
+          >
+            {cat.title}
+          </button>
+        ))}
+      </div>
+      <!-- Indicador visual de scroll móvil (Degradado + Flecha) -->
+      <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none md:hidden flex items-center justify-end pb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-neutral-400 animate-pulse">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
+      </div>
     </div>
   </div>
 
@@ -157,6 +165,7 @@ const categories = [
                 return (
                   <button 
                     data-color-select
+                    data-variant-index={vIndex}
                     data-target-img={`prod-img-${pIndex}`}
                     data-target-sizes={`prod-sizes-${pIndex}`}
                     data-img-src={imgUrl}
@@ -175,6 +184,14 @@ const categories = [
                 : 'Agotado'}
             </span>
           </div>
+
+          <button 
+            data-open-modal 
+            data-product-info={productDataJson} 
+            class="mt-4 w-full block text-center border border-neutral-200 text-neutral-600 text-[9px] font-bold tracking-[0.15em] uppercase py-2 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white transition-all duration-300 cursor-pointer"
+          >
+            Seleccionar Talla
+          </button>
         </div>
       );
     })}
@@ -340,6 +357,12 @@ const categories = [
       const targetSizesId = btn.getAttribute('data-target-sizes');
       const newImgSrc = btn.getAttribute('data-img-src');
       const newSizes = btn.getAttribute('data-sizes');
+      const vIndex = btn.getAttribute('data-variant-index');
+
+      const card = btn.closest('[data-product-card]');
+      if (card && vIndex) {
+        card.setAttribute('data-active-variant-index', vIndex);
+      }
 
       if (targetImgId && newImgSrc) {
         const imgElement = document.getElementById(targetImgId) as HTMLImageElement;
@@ -431,8 +454,11 @@ const categories = [
       
       if (modalImg) modalImg.src = ''; 
 
+      const card = element.closest('[data-product-card]');
+      const activeIndex = card ? parseInt(card.getAttribute('data-active-variant-index') || '0', 10) : 0;
+
       activeProduct = JSON.parse(rawData);
-      activeVariant = activeProduct.variants[0];
+      activeVariant = activeProduct.variants[activeIndex] || activeProduct.variants[0];
       
       const initialSizes = activeVariant?.availableSizes || [];
       activeSize = initialSizes[0] || '';
@@ -541,7 +567,7 @@ const categories = [
         modalColorsContainer.innerHTML = '';
         activeProduct.variants?.forEach((v: any, index: number) => {
           const btn = document.createElement('button');
-          btn.className = `w-6 h-6 rounded-full border border-neutral-300 block cursor-pointer transition-all ${index === 0 ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`;
+          btn.className = `w-6 h-6 rounded-full border border-neutral-300 block cursor-pointer transition-all ${index === activeIndex ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`;
           btn.style.backgroundColor = v.colorHex;
           btn.title = v.colorName;
           
