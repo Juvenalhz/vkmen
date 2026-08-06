@@ -1,9 +1,14 @@
 ---
 // src/components/CartDrawer.astro
+import { client } from '../lib/sanity';
+
+const settings = await client.fetch(`*[_type == "homeSettings"][0]{ currency }`);
+const currency = settings?.currency || 'EUR';
 ---
 
 <div 
   id="cart-drawer" 
+  data-currency={currency}
   class="fixed inset-y-0 right-0 z-[100] w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-500 ease-in-out flex flex-col h-full overflow-hidden"
 >
   <div class="p-6 border-b border-neutral-100 flex justify-between items-center bg-white shrink-0">
@@ -138,6 +143,10 @@
   }
 
   // --- RENDERIZADO DINÁMICO DESDE NANOSTORES ---
+  const activeCurrency = cartDrawer?.getAttribute('data-currency') || 'EUR';
+  const formatCartPrice = (val: number) => activeCurrency === 'USD' ? `$ ${val}` : `${val} €`;
+  const formatCartPriceDecimal = (val: number) => activeCurrency === 'USD' ? `$ ${val.toFixed(2)}` : `${val.toFixed(2)} €`;
+
   cartItems.subscribe((items: CartItem[]) => {
     if (!drawerCount || !emptyState || !itemsContainer || !cartFooter || !cartSubtotal || !checkoutWhatsappBtn) return;
 
@@ -175,7 +184,7 @@
               Talla: <span class="font-mono font-bold text-neutral-800">${item.size}</span> | 
               Color: <span class="text-neutral-800">${item.colorName}</span>
             </p>
-            <p class="text-xs font-bold text-neutral-900 mt-1">${item.price} € <span class="text-[10px] font-normal text-neutral-400">x ${item.quantity}</span></p>
+            <p class="text-xs font-bold text-neutral-900 mt-1">${formatCartPrice(item.price)} <span class="text-[10px] font-normal text-neutral-400">x ${item.quantity}</span></p>
           </div>
         </div>
         <button 
@@ -198,15 +207,15 @@
       itemsContainer.appendChild(itemElement);
     });
 
-    cartSubtotal.textContent = `${subtotal.toFixed(2)} €`;
+    cartSubtotal.textContent = formatCartPriceDecimal(subtotal);
 
     let text = `¡Hola VKMEN! Me interesa consultar la disponibilidad de este pedido:\n\n`;
     items.forEach((item: CartItem, index: number) => {
       text += `${index + 1}. ${item.name}\n`;
       text += `   [SKU: ${item.sku}] | Talla: ${item.size} | Color: ${item.colorName}\n`;
-      text += `   Cantidad: ${item.quantity} pza(s) — Precio: ${item.price} € c/u\n\n`;
+      text += `   Cantidad: ${item.quantity} pza(s) — Precio: ${formatCartPrice(item.price)} c/u\n\n`;
     });
-    text += `Total Estimado del Pedido: ${subtotal.toFixed(2)} €`;
+    text += `Total Estimado del Pedido: ${formatCartPriceDecimal(subtotal)}`;
 
     checkoutWhatsappBtn.href = `https://wa.me/584124507289?text=${encodeURIComponent(text)}`;
 

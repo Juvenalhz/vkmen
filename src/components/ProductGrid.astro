@@ -31,12 +31,18 @@ const dataQuery = `{
       images[] { asset->{ url } }
     }
   },
+  "homeSettings": *[_type == "homeSettings"][0] {
+    currency
+  },
   "storeSettings": *[_type == "siteSettings"][0] {
     isotipo { asset->{ url } }
   }
 }`;
 
-const { products, storeSettings } = await client.fetch(dataQuery);
+const { products, homeSettings, storeSettings } = await client.fetch(dataQuery);
+const currency = homeSettings?.currency || 'EUR';
+const currencySymbol = currency === 'USD' ? '$' : '€';
+const formatPrice = (price: number) => currency === 'USD' ? `$ ${price}` : `${price} €`;
 
 // Ordenar las tallas en el orden lógico (S, M, L, XL) globalmente para que afecte todo el frontend
 const sizeOrder = ['S', 'M', 'L', 'XL'];
@@ -112,6 +118,8 @@ const categories = [
         name: product.name,
         sku: product.sku,
         price: product.price,
+        formattedPrice: formatPrice(product.price),
+        currencySymbol,
         variants: (product.variants || []).map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
           
@@ -148,7 +156,7 @@ const categories = [
               <span class="block text-[9px] font-mono tracking-widest text-neutral-400 uppercase">{product.sku}</span>
               <h2 class="text-xs font-medium tracking-wider text-neutral-800 uppercase">{product.name}</h2>
             </div>
-            <p class="text-xs font-bold tracking-wider text-neutral-900">{product.price} €</p>
+            <p class="text-xs font-bold tracking-wider text-neutral-900">{formatPrice(product.price)}</p>
           </div>
 
           <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
@@ -561,7 +569,7 @@ const categories = [
 
       if (modalSku) modalSku.textContent = `SKU: ${activeProduct.sku}`;
       if (modalTitle) modalTitle.textContent = activeProduct.name;
-      if (modalPrice) modalPrice.textContent = `${activeProduct.price} €`;
+      if (modalPrice) modalPrice.textContent = activeProduct.formattedPrice || (activeProduct.currencySymbol === '$' ? `$ ${activeProduct.price}` : `${activeProduct.price} €`);
       
       if (modalColorsContainer) {
         modalColorsContainer.innerHTML = '';

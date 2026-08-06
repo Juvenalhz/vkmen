@@ -5,15 +5,15 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title('Panel de Control VKMEN')
     .items([
-      // 1. SECCIÓN DE DISEÑO DE LA PÁGINA (HERO)
+      // 1. SECCIÓN DE CONFIGURACIÓN GENERAL Y MONEDA
       S.listItem()
-        .title('Diseño de Inicio (Hero)')
-        .icon(() => '✨')
+        .title('Configuración General & Moneda ⚙️')
+        .icon(() => '⚙️')
         .child(
           S.document()
             .schemaType('homeSettings')
             .documentId('homeSettings')
-            .title('Editar Contenido del Hero')
+            .title('Configuración de Tienda, Hero y Moneda')
         ),
 
       S.divider(), // Línea divisoria visual

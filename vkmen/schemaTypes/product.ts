@@ -33,9 +33,9 @@ export default defineType({
     }),
     defineField({
       name: 'price',
-      title: 'Precio (EUR €)',
+      title: 'Precio',
       type: 'number',
-      description: 'Precio de venta en Euros (€).',
+      description: 'Precio de venta del producto (La moneda global € o $ se configura en "Diseño de Inicio").',
       validation: (Rule) => Rule.required().min(0).error('El precio debe ser mayor o igual a 0.'),
     }),
     defineField({

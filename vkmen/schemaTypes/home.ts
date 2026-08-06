@@ -3,9 +3,26 @@ import { defineField, defineType } from 'sanity';
 
 export default defineType({
   name: 'homeSettings',
-  title: 'Configuración Inicio (Hero & Logo Scroll)',
+  title: 'Configuración General (Hero, Logo & Moneda)',
   type: 'document',
   fields: [
+    // --- MONEDA GLOBAL DE LA TIENDA ---
+    defineField({
+      name: 'currency',
+      title: 'Moneda Global de la Tienda',
+      type: 'string',
+      description: 'Selecciona la divisa en la que se mostrarán todos los precios en el catálogo y los pedidos.',
+      options: {
+        list: [
+          { title: 'Euro (€)', value: 'EUR' },
+          { title: 'Dólar ($)', value: 'USD' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'EUR',
+      validation: (Rule) => Rule.required().error('Debes seleccionar una moneda global.'),
+    }),
+
     // --- LOGO EXCLUSIVO PARA EL SCROLL (TEXTO -> IMAGEN) ---
     defineField({
       name: 'logoScroll',
