@@ -19,12 +19,12 @@ interface Product {
 
 // 1. Extraemos los productos Y el isotipo institucional en una sola petición
 const dataQuery = `{
-  "products": *[_type == "product" && count(variants[].availableSizes[]) > 0] | order(orderRank asc) {
+  "products": *[_type == "product" && count(variants[defined(availableSizes) && count(availableSizes) > 0]) > 0] | order(orderRank asc) {
     sku,
     name,
     category,
     price,
-    variants[count(availableSizes) > 0] {
+    variants[defined(availableSizes) && count(availableSizes) > 0] {
       colorName,
       "colorHex": hex.hex,
       availableSizes,
