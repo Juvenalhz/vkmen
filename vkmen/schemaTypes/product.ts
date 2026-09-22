@@ -33,10 +33,40 @@ export default defineType({
     }),
     defineField({
       name: 'price',
-      title: 'Precio',
+      title: 'Precio Regular',
       type: 'number',
-      description: 'Precio de venta del producto (La moneda global € o $ se configura en "Diseño de Inicio").',
+      description: 'Precio normal de venta del producto (La moneda global € o $ se configura en "Diseño de Inicio").',
       validation: (Rule) => Rule.required().min(0).error('El precio debe ser mayor o igual a 0.'),
+    }),
+    defineField({
+      name: 'isOnSale',
+      title: '¿Producto en Oferta / Promoción?',
+      type: 'boolean',
+      description: 'Activa este interruptor para aplicar un precio en oferta y destacar el producto con la etiqueta de descuento.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'offerPrice',
+      title: 'Precio en Oferta ($ o €)',
+      type: 'number',
+      description: 'Precio rebajado especial (debe ser menor al precio regular).',
+      hidden: ({ parent }) => !parent?.isOnSale,
+      validation: (Rule) =>
+        Rule.custom((offerPrice, context) => {
+          const parent = context.parent as { isOnSale?: boolean; price?: number };
+          if (parent?.isOnSale) {
+            if (offerPrice === undefined || offerPrice === null) {
+              return 'Si la oferta está activa, debes colocar el precio en oferta.';
+            }
+            if (parent.price !== undefined && offerPrice >= parent.price) {
+              return 'El precio en oferta debe ser menor al precio regular.';
+            }
+            if (offerPrice < 0) {
+              return 'El precio no puede ser negativo.';
+            }
+          }
+          return true;
+        }),
     }),
     defineField({
       name: 'category',

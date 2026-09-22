@@ -14,6 +14,8 @@ interface Product {
   name: string;
   category: string; 
   price: number;
+  isOnSale?: boolean;
+  offerPrice?: number;
   variants: Variant[];
 }
 
@@ -24,6 +26,8 @@ const dataQuery = `{
     name,
     category,
     price,
+    isOnSale,
+    offerPrice,
     variants[defined(availableSizes) && count(availableSizes) > 0] {
       colorName,
       "colorHex": hex.hex,
@@ -72,33 +76,55 @@ const rawCategories = products.map((p: any) => p.category).filter(Boolean);
 const uniqueCategories = [...new Set(rawCategories)];
 
 const categories = [
-  { title: 'Todos', value: 'all' },
+  { title: 'Todos', value: 'all', isSpecial: false },
+  { title: 'Ofertas', value: 'ofertas', isSpecial: true },
   ...uniqueCategories.map((cat: any) => ({
     title: String(cat).split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-    value: String(cat)
+    value: String(cat),
+    isSpecial: false
   }))
 ];
 ---
 
 <section id="catalogo" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 relative">
   
-  <div class="flex flex-col md:flex-row md:items-baseline md:justify-between border-b border-neutral-100 pb-3 mb-12 gap-4">
-    <h3 class="text-xs font-bold tracking-[0.2em] uppercase text-neutral-800 whitespace-nowrap">
-      Colecciones
-    </h3>
-    <div class="relative w-full md:w-auto overflow-hidden">
-      <div class="flex overflow-x-auto md:justify-end gap-6 md:gap-10 no-scrollbar pb-1 md:pb-0 w-full pr-8 md:pr-0">
+  <div class="border-b border-neutral-100 pb-4 mb-10">
+    <div class="relative w-full overflow-hidden flex flex-col gap-3">
+      <!-- Barra de Categorías Horizontal (100% espacio libre sin superposición) -->
+      <div class="flex items-center overflow-x-auto gap-4 sm:gap-8 no-scrollbar py-1 w-full pl-0.5 pr-8">
         {categories.map((cat) => (
           <button
             data-category-btn={cat.value}
-            class="text-xs font-medium tracking-[0.15em] uppercase pb-2 border-b border-transparent text-neutral-400 hover:text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0"
+            class={`text-xs font-medium tracking-[0.15em] uppercase pb-2 pt-1 border-b-2 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0 flex items-center gap-1.5 ${
+              cat.isSpecial
+                ? 'text-[#d4af37] border-transparent hover:text-amber-400 font-extrabold'
+                : 'text-neutral-400 border-transparent hover:text-neutral-900'
+            }`}
           >
+            {cat.isSpecial && (
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-[#d4af37]"></span>
+              </span>
+            )}
             {cat.title}
           </button>
         ))}
       </div>
+
+      <!-- Indicador Informativo cuando el Modo Ofertas está Activo -->
+      <div id="offers-active-banner" class="hidden items-center justify-between bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-xl px-4 py-2 text-xs text-neutral-800 transition-all duration-300">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-[#d4af37] animate-pulse"></span>
+          <span class="font-medium">Modo Ofertas Activo: <strong class="font-bold text-neutral-900" id="offers-active-text">Mostrando productos en oferta</strong></span>
+        </div>
+        <button id="clear-offers-mode-btn" class="text-[10px] font-bold uppercase tracking-wider text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-100 px-3 py-1 rounded-md border border-neutral-300 shadow-sm transition-all cursor-pointer">
+          Desactivar Ofertas
+        </button>
+      </div>
+
       <!-- Indicador visual de scroll móvil (Degradado + Flecha) -->
-      <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none md:hidden flex items-center justify-end pb-2">
+      <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none md:hidden flex items-center justify-end">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-neutral-400 animate-pulse">
           <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
         </svg>
@@ -114,11 +140,20 @@ const categories = [
         ? urlFor(defaultVariant.images[0]).width(600).height(800).fit('crop').crop('top').format('webp').url()
         : vkmenIsotipo;
 
+      const isEffectiveOffer = Boolean(product.isOnSale && typeof product.offerPrice === 'number' && product.offerPrice < product.price);
+      const discountPercent = isEffectiveOffer ? Math.round(((product.price - product.offerPrice!) / product.price) * 100) : 0;
+      const effectivePrice = isEffectiveOffer ? product.offerPrice! : product.price;
+
       const productDataJson = JSON.stringify({
         name: product.name,
         sku: product.sku,
         price: product.price,
-        formattedPrice: formatPrice(product.price),
+        isOnSale: isEffectiveOffer,
+        offerPrice: product.offerPrice || null,
+        effectivePrice,
+        discountPercent,
+        formattedPrice: formatPrice(effectivePrice),
+        formattedOriginalPrice: isEffectiveOffer ? formatPrice(product.price) : null,
         currencySymbol,
         variants: (product.variants || []).map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
@@ -136,8 +171,17 @@ const categories = [
       });
 
       return (
-        <div data-product-card={product.category} class="group bg-white flex flex-col justify-between">
+        <div 
+          data-product-card={product.category} 
+          data-is-on-sale={isEffectiveOffer ? "true" : "false"}
+          class="group bg-white flex flex-col justify-between"
+        >
           <div data-open-modal data-product-info={productDataJson} class="relative w-full h-112.5 bg-neutral-50 overflow-hidden cursor-pointer">
+            {isEffectiveOffer && (
+              <div class="absolute top-3 left-3 z-10 flex items-center gap-1 bg-[#d4af37]/25 text-[#d4af37] border border-[#d4af37]/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-wider uppercase shadow-sm">
+                <span>{discountPercent}% OFF</span>
+              </div>
+            )}
             <img 
               id={`prod-img-${pIndex}`}
               src={defaultImage} 
@@ -156,7 +200,16 @@ const categories = [
               <span class="block text-[9px] font-mono tracking-widest text-neutral-400 uppercase">{product.sku}</span>
               <h2 class="text-xs font-medium tracking-wider text-neutral-800 uppercase">{product.name}</h2>
             </div>
-            <p class="text-xs font-bold tracking-wider text-neutral-900">{formatPrice(product.price)}</p>
+            <div class="text-right">
+              {isEffectiveOffer ? (
+                <div class="flex flex-col items-end">
+                  <span class="text-[10px] font-mono text-neutral-400 line-through leading-none">{formatPrice(product.price)}</span>
+                  <span class="text-xs font-black tracking-wider text-neutral-900 leading-tight mt-0.5">{formatPrice(product.offerPrice!)}</span>
+                </div>
+              ) : (
+                <p class="text-xs font-bold tracking-wider text-neutral-900">{formatPrice(product.price)}</p>
+              )}
+            </div>
           </div>
 
           <div class="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
@@ -327,34 +380,94 @@ const categories = [
     }
   });
 
-  // --- 2. FILTRADO DE CATEGORÍAS ---
+  // --- 2. FILTRADO REVOLUCIONARIO DE CATEGORÍAS Y MODO OFERTAS ---
   const catButtons = document.querySelectorAll('[data-category-btn]');
   const productCards = document.querySelectorAll('[data-product-card]');
-  const allBtn = document.querySelector('[data-category-btn="all"]');
-  if (allBtn) {
-    allBtn.classList.remove('text-neutral-400');
-    allBtn.classList.add('text-neutral-900', 'border-neutral-900');
-  }
+  const offersActiveBanner = document.getElementById('offers-active-banner');
+  const offersActiveText = document.getElementById('offers-active-text');
+  const clearOffersBtn = document.getElementById('clear-offers-mode-btn');
+
+  let activeCategory = 'all';
+  let isOffersOnlyActive = false;
+
+  const updateFilteringUI = () => {
+    // 1. Actualizar estados visuales de la botonera
+    catButtons.forEach(btn => {
+      const catVal = btn.getAttribute('data-category-btn');
+      
+      if (catVal === 'ofertas') {
+        if (isOffersOnlyActive) {
+          btn.className = "text-xs font-black tracking-[0.15em] uppercase px-3.5 py-1 bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/60 rounded-full shadow-sm backdrop-blur-sm transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0 flex items-center gap-1.5 ring-2 ring-[#d4af37]/20 scale-105";
+        } else {
+          btn.className = "text-xs font-extrabold tracking-[0.15em] uppercase pb-2 pt-1 text-[#d4af37] border-b-2 border-transparent hover:text-amber-400 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0 flex items-center gap-1.5";
+        }
+      } else {
+        if (catVal === activeCategory) {
+          btn.className = "text-xs font-bold tracking-[0.15em] uppercase pb-2 pt-1 border-b-2 border-neutral-900 text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0";
+        } else {
+          btn.className = "text-xs font-medium tracking-[0.15em] uppercase pb-2 pt-1 border-b-2 border-transparent text-neutral-400 hover:text-neutral-900 transition-all duration-300 whitespace-nowrap cursor-pointer flex-shrink-0";
+        }
+      }
+    });
+
+    // 2. Mostrar u ocultar el banner informativo de Ofertas
+    if (offersActiveBanner) {
+      if (isOffersOnlyActive) {
+        offersActiveBanner.classList.remove('hidden');
+        offersActiveBanner.classList.add('flex');
+        if (offersActiveText) {
+          const activeBtnEl = document.querySelector(`[data-category-btn="${activeCategory}"]`);
+          const catTitle = activeCategory === 'all' 
+            ? 'Todos los productos' 
+            : (activeBtnEl?.textContent?.trim() || activeCategory);
+          offersActiveText.textContent = `Mostrando ofertas en ${catTitle}`;
+        }
+      } else {
+        offersActiveBanner.classList.remove('flex');
+        offersActiveBanner.classList.add('hidden');
+      }
+    }
+
+    // 3. Filtrar grilla de productos combinando Categoría + Modo Ofertas
+    productCards.forEach(card => {
+      const productCategory = card.getAttribute('data-product-card');
+      const isOnSale = card.getAttribute('data-is-on-sale') === 'true';
+
+      const matchesCategory = (activeCategory === 'all' || productCategory === activeCategory);
+      const matchesOffers = (!isOffersOnlyActive || isOnSale);
+
+      if (matchesCategory && matchesOffers) {
+        (card as HTMLElement).style.display = 'flex';
+      } else {
+        (card as HTMLElement).style.display = 'none';
+      }
+    });
+  };
+
   catButtons.forEach(button => {
     button.addEventListener('click', () => {
       const selectedCategory = button.getAttribute('data-category-btn');
-      catButtons.forEach(btn => {
-        btn.classList.remove('text-neutral-900', 'border-neutral-900');
-        btn.classList.add('text-neutral-400', 'border-transparent');
-      });
-      button.classList.remove('text-neutral-400', 'border-transparent');
-      button.classList.add('text-neutral-900', 'border-neutral-900');
 
-      productCards.forEach(card => {
-        const productCategory = card.getAttribute('data-product-card');
-        if (selectedCategory === 'all' || productCategory === selectedCategory) {
-          (card as HTMLElement).style.display = 'flex';
-        } else {
-          (card as HTMLElement).style.display = 'none';
+      if (selectedCategory === 'ofertas') {
+        // Al presionar Ofertas: Alternar Modo Ofertas (Toggle ON / OFF)
+        isOffersOnlyActive = !isOffersOnlyActive;
+      } else {
+        if (selectedCategory) {
+          activeCategory = selectedCategory;
         }
-      });
+      }
+
+      updateFilteringUI();
     });
   });
+
+  clearOffersBtn?.addEventListener('click', () => {
+    isOffersOnlyActive = false;
+    updateFilteringUI();
+  });
+
+  // Inicializar UI al cargar la página
+  updateFilteringUI();
 
   // --- 3. CAMBIO DE COLOR EN LA GRILLA ---
   const colorButtons = document.querySelectorAll('[data-color-select]');
@@ -569,7 +682,19 @@ const categories = [
 
       if (modalSku) modalSku.textContent = `SKU: ${activeProduct.sku}`;
       if (modalTitle) modalTitle.textContent = activeProduct.name;
-      if (modalPrice) modalPrice.textContent = activeProduct.formattedPrice || (activeProduct.currencySymbol === '$' ? `$ ${activeProduct.price}` : `${activeProduct.price} €`);
+      if (modalPrice) {
+        if (activeProduct.isOnSale) {
+          modalPrice.innerHTML = `
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xl font-black text-neutral-900">${activeProduct.formattedPrice}</span>
+              <span class="text-base font-mono text-neutral-400 line-through">${activeProduct.formattedOriginalPrice}</span>
+              <span class="bg-[#d4af37]/20 border border-[#d4af37]/60 text-[#d4af37] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">${activeProduct.discountPercent}% OFF</span>
+            </div>
+          `;
+        } else {
+          modalPrice.textContent = activeProduct.formattedPrice || (activeProduct.currencySymbol === '$' ? `$ ${activeProduct.price}` : `${activeProduct.price} €`);
+        }
+      }
       
       if (modalColorsContainer) {
         modalColorsContainer.innerHTML = '';
@@ -601,7 +726,7 @@ const categories = [
     addCartItem({
       sku: activeProduct.sku,
       name: activeProduct.name,
-      price: activeProduct.price,
+      price: activeProduct.effectivePrice !== undefined ? activeProduct.effectivePrice : activeProduct.price,
       colorName: activeVariant.colorName,
       colorHex: activeVariant.colorHex,
       size: activeSize,
