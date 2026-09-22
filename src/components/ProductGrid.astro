@@ -178,7 +178,8 @@ const categories = [
         >
           <div data-open-modal data-product-info={productDataJson} class="relative w-full h-112.5 bg-neutral-50 overflow-hidden cursor-pointer">
             {isEffectiveOffer && (
-              <div class="absolute top-3 left-3 z-10 flex items-center gap-1 bg-[#d4af37]/25 text-[#d4af37] border border-[#d4af37]/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-wider uppercase shadow-sm">
+              <div class="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/85 text-[#d4af37] border border-[#d4af37]/70 backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-black tracking-wider uppercase shadow-md">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
                 <span>{discountPercent}% OFF</span>
               </div>
             )}
@@ -688,7 +689,10 @@ const categories = [
             <div class="flex items-center gap-3 mt-2">
               <span class="text-xl font-black text-neutral-900">${activeProduct.formattedPrice}</span>
               <span class="text-base font-mono text-neutral-400 line-through">${activeProduct.formattedOriginalPrice}</span>
-              <span class="bg-[#d4af37]/20 border border-[#d4af37]/60 text-[#d4af37] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">${activeProduct.discountPercent}% OFF</span>
+              <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                ${activeProduct.discountPercent}% OFF
+              </span>
             </div>
           `;
         } else {
