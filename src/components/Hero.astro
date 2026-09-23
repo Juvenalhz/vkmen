@@ -1,6 +1,6 @@
 ---
 // src/components/Hero.astro
-import { client, urlFor } from '../lib/sanity';
+import { client, urlFor } from "../lib/sanity";
 
 const homeQuery = `*[_type == "homeSettings"][0] {
   heroSub,
@@ -10,50 +10,69 @@ const homeQuery = `*[_type == "homeSettings"][0] {
 
 const homeData = await client.fetch(homeQuery);
 
-const fondoHero = homeData?.heroImageUrl 
-  ? urlFor(homeData.heroImageUrl).width(1920).format('webp').url()
-  : '';
+const fondoHero = homeData?.heroImageUrl
+  ? urlFor(homeData.heroImageUrl).width(1920).format("webp").url()
+  : "";
 ---
 
-<section id="hero" class="relative min-h-[90vh] md:min-h-screen w-full overflow-hidden bg-black flex flex-col justify-between pt-24 md:pt-32 pb-10 select-none">
-  
+<section
+  id="hero"
+  class="relative min-h-[90vh] md:min-h-screen w-full overflow-hidden bg-black flex flex-col justify-between pt-24 md:pt-32 pb-10 select-none"
+>
   <!-- Fondo con Imagen e Incrustación de Degradados Oscuros -->
   <div class="absolute inset-0 z-0 h-full w-full">
-    {fondoHero && (
-      <img 
-        src={fondoHero} 
-        alt="VKMEN Hero" 
-        class="h-full w-full object-cover object-center opacity-90 transition-transform duration-1000 ease-out"
-        loading="eager"
-      />
-    )}
+    {
+      fondoHero && (
+        <img
+          src={fondoHero}
+          alt="VKMEN Hero"
+          class="h-full w-full object-cover object-center opacity-90 transition-transform duration-1000 ease-out"
+          loading="eager"
+        />
+      )
+    }
     <!-- Superposición elegante: Oscuro en la izquierda/móvil para lectura perfecta -->
-    <div class="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/30 z-10 hidden md:block"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-black/85 via-black/90 to-black/95 z-10 md:hidden"></div>
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/30 z-10 hidden md:block"
+    >
+    </div>
+    <div
+      class="absolute inset-0 bg-gradient-to-b from-black/85 via-black/90 to-black/95 z-10 md:hidden"
+    >
+    </div>
   </div>
 
-  <div class="container mx-auto px-4 sm:px-6 relative z-20 text-white my-auto w-full max-w-6xl">
-    
+  <div
+    class="container mx-auto px-4 sm:px-6 relative z-20 text-white my-auto w-full max-w-6xl"
+  >
     <!-- CONTENEDOR DEL CARRUSEL DE SLIDES -->
     <div id="hero-slider-container" class="relative overflow-hidden w-full">
-      <div id="hero-track" class="flex transition-transform duration-700 ease-out w-full">
-        
+      <div
+        id="hero-track"
+        class="flex transition-transform duration-700 ease-out w-full"
+      >
         <!-- SLIDE 1: MYSTERY BOX EXCLUSIVA -->
         <div class="w-full flex-shrink-0 min-w-full">
           <div class="mb-6 md:mb-8 text-center md:text-left" id="hero-header-1">
-            <span class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm">
+            <span
+              class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm"
+            >
               Oferta Exclusiva
             </span>
-            <h1 class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg">
+            <h1
+              class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg"
+            >
               Mystery Box
             </h1>
           </div>
 
           <!-- Tarjetas de Cajas ($40 / $80) -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mb-6 sm:mb-8" id="hero-cards-1">
-            
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mb-6 sm:mb-8"
+            id="hero-cards-1"
+          >
             <!-- CAJA PEQUEÑA -->
-            <a 
+            <a
               href="https://wa.me/584124507289?text=Hola%20VKMEN!%20Me%20interesa%20la%20Oferta%20Exclusiva%20de%20la%20MYSTERY%20BOX%20PEQUE%C3%91A%20(3%20prendas%20por%20$40).%20Quisiera%20seleccionar%201%20prenda%20a%20mi%20gusto%20y%20entiendo%20que%20las%202%20prendas%20restantes%20son%20aleatorias%20seg%C3%BAn%20mi%20talla%20y%20estilo.%20Quisiera%20coordinar%20mi%20pedido."
               target="_blank"
               rel="noopener noreferrer"
@@ -61,34 +80,57 @@ const fondoHero = homeData?.heroImageUrl
             >
               <div>
                 <div class="flex items-center justify-between mb-2">
-                  <span class="font-body text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-white/70 group-hover:text-[#d4af37] transition-colors">
+                  <span
+                    class="font-body text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-white/70 group-hover:text-[#d4af37] transition-colors"
+                  >
                     Caja Pequeña
                   </span>
-                  <span class="text-[10px] bg-white/10 text-white/90 px-2.5 py-0.5 rounded-full font-semibold">
+                  <span
+                    class="text-[10px] bg-white/10 text-white/90 px-2.5 py-0.5 rounded-full font-semibold"
+                  >
                     Popular
                   </span>
                 </div>
 
                 <div class="flex items-baseline gap-2 mb-3">
-                  <span class="font-heading text-2xl sm:text-4xl text-white font-extrabold tracking-tight">3 PRENDAS</span>
-                  <span class="font-heading text-3xl sm:text-4xl text-[#d4af37] font-black">$40</span>
+                  <span
+                    class="font-heading text-2xl sm:text-4xl text-white font-extrabold tracking-tight"
+                    >3 PRENDAS</span
+                  >
+                  <span
+                    class="font-heading text-3xl sm:text-4xl text-[#d4af37] font-black"
+                    >$40</span
+                  >
                 </div>
 
-                <p class="font-body text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4">
-                  El cliente elige <strong class="text-white font-semibold">1 prenda</strong>. Las otras 2 se seleccionan de forma aleatoria según su talla y estilo.
+                <p
+                  class="font-body text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4"
+                >
+                  El cliente elige <strong class="text-white font-semibold"
+                    >1 prenda</strong
+                  >. Las otras 2 se seleccionan de forma aleatoria según su
+                  talla y estilo.
                 </p>
               </div>
 
-              <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-[#d4af37] group-hover:text-white transition-colors">
-                <span class="flex items-center gap-1.5">Pedir por WhatsApp</span>
-                <svg class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              <div
+                class="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-[#d4af37] group-hover:text-white transition-colors"
+              >
+                <span class="flex items-center gap-1.5">Pedir por WhatsApp</span
+                >
+                <svg
+                  class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"
+                  ></path>
                 </svg>
               </div>
             </a>
 
             <!-- CAJA GRANDE -->
-            <a 
+            <a
               href="https://wa.me/584124507289?text=Hola%20VKMEN!%20Me%20interesa%20la%20Oferta%20Exclusiva%20de%20la%20MYSTERY%20BOX%20GRANDE%20(7%20prendas%20por%20$80).%20Quisiera%20seleccionar%202%20prendas%20a%20mi%20gusto%20y%20entiendo%20que%20las%205%20prendas%20restantes%20son%20aleatorias%20seg%C3%BAn%20mi%20talla%20y%20estilo.%20Quisiera%20coordinar%20mi%20pedido."
               target="_blank"
               rel="noopener noreferrer"
@@ -96,60 +138,97 @@ const fondoHero = homeData?.heroImageUrl
             >
               <div>
                 <div class="flex items-center justify-between mb-2">
-                  <span class="font-body text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[#d4af37]">
+                  <span
+                    class="font-body text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[#d4af37]"
+                  >
                     Caja Grande
                   </span>
-                  <span class="text-[10px] bg-[#d4af37] text-black font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <span
+                    class="text-[10px] bg-[#d4af37] text-black font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider"
+                  >
                     Mejor Valor
                   </span>
                 </div>
 
                 <div class="flex items-baseline gap-2 mb-3">
-                  <span class="font-heading text-2xl sm:text-4xl text-white font-extrabold tracking-tight">7 PRENDAS</span>
-                  <span class="font-heading text-3xl sm:text-4xl text-[#d4af37] font-black">$80</span>
+                  <span
+                    class="font-heading text-2xl sm:text-4xl text-white font-extrabold tracking-tight"
+                    >7 PRENDAS</span
+                  >
+                  <span
+                    class="font-heading text-3xl sm:text-4xl text-[#d4af37] font-black"
+                    >$80</span
+                  >
                 </div>
 
-                <p class="font-body text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4">
-                  El cliente elige <strong class="text-white font-semibold">2 prendas</strong>. Las otras 5 se seleccionan de forma aleatoria según su talla y estilo.
+                <p
+                  class="font-body text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4"
+                >
+                  El cliente elige <strong class="text-white font-semibold"
+                    >2 prendas</strong
+                  >. Las otras 5 se seleccionan de forma aleatoria según su
+                  talla y estilo.
                 </p>
               </div>
 
-              <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-[#d4af37] group-hover:text-white transition-colors">
-                <span class="flex items-center gap-1.5">Pedir por WhatsApp</span>
-                <svg class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              <div
+                class="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-[#d4af37] group-hover:text-white transition-colors"
+              >
+                <span class="flex items-center gap-1.5">Pedir por WhatsApp</span
+                >
+                <svg
+                  class="w-4 h-4 fill-current transform group-hover:translate-x-1 transition-transform"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"
+                  ></path>
                 </svg>
               </div>
             </a>
-
           </div>
         </div>
 
         <!-- SLIDE 2: PROMOCIONES Y DESCUENTOS ESPECTACULARES -->
         <div class="w-full flex-shrink-0 min-w-full">
           <div class="mb-6 md:mb-8 text-center md:text-left" id="hero-header-2">
-            <span class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm">
+            <span
+              class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm"
+            >
               Descuentos de Temporada
             </span>
-            <h1 class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg">
+            <h1
+              class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg"
+            >
               Ofertas de Aniversario
             </h1>
           </div>
 
           <!-- Banner Promocional -->
-          <div class="max-w-3xl mb-6 sm:mb-8 bg-gradient-to-r from-black/80 via-neutral-900/80 to-black/80 backdrop-blur-md border border-[#d4af37]/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div
+            class="max-w-3xl mb-6 sm:mb-8 bg-gradient-to-r from-black/80 via-neutral-900/80 to-black/80 backdrop-blur-md border border-[#d4af37]/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6"
+          >
             <div class="space-y-2 text-center md:text-left">
-              <div class="inline-flex items-center gap-2 bg-[#d4af37] text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                <span>HASTA 60% OFF</span>
+              <div
+                class="inline-flex items-center gap-2 bg-[#d4af37] text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md"
+              >
+                <span>HASTA 70% OFF</span>
               </div>
-              <h2 class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-white">Prendas Seleccionadas en Descuento</h2>
+              <h2
+                class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-white"
+              >
+                Prendas Seleccionadas en Descuento
+              </h2>
               <p class="text-xs sm:text-sm text-white/80 max-w-md font-light">
-                Renueva tu estilo urbano con precios de promoción exclusivos por tiempo limitado en nuestra tienda.
+                Renueva tu estilo con precios de promoción exclusivos por tiempo
+                limitado en nuestra tienda.
               </p>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-              <button 
+            <div
+              class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0"
+            >
+              <button
                 id="hero-go-ofertas-btn"
                 class="w-full sm:w-auto bg-[#d4af37] hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-[0.15em] px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer text-center"
               >
@@ -158,81 +237,185 @@ const fondoHero = homeData?.heroImageUrl
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
     <!-- NAVEGACIÓN Y CONTROLES DEL CARRUSEL (PUNTOS E INDICADORES) -->
     <div class="flex items-center justify-between max-w-3xl mb-6 pt-2">
       <div class="flex items-center gap-2" id="hero-dots">
-        <button data-hero-dot="0" class="w-8 h-2.5 rounded-full bg-[#d4af37] shadow-sm transition-all duration-300 cursor-pointer" title="Diapositiva 1 (Mystery Box)"></button>
-        <button data-hero-dot="1" class="w-3 h-2.5 rounded-full bg-[#d4af37]/30 hover:bg-[#d4af37]/70 transition-all duration-300 cursor-pointer" title="Diapositiva 2 (Ofertas)"></button>
+        <button
+          data-hero-dot="0"
+          class="w-8 h-2.5 rounded-full bg-[#d4af37] shadow-sm transition-all duration-300 cursor-pointer"
+          title="Diapositiva 1 (Mystery Box)"></button>
+        <button
+          data-hero-dot="1"
+          class="w-3 h-2.5 rounded-full bg-[#d4af37]/30 hover:bg-[#d4af37]/70 transition-all duration-300 cursor-pointer"
+          title="Diapositiva 2 (Ofertas)"></button>
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="hero-prev-btn" class="p-2 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:border-[#d4af37] transition-all cursor-pointer" title="Anterior">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        <button
+          id="hero-pause-btn"
+          class="p-2 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:border-[#d4af37] transition-all cursor-pointer flex items-center justify-center"
+          title="Pausar reproducción"
+          aria-label="Pausar o reanudar reproducción automática"
+        >
+          <svg
+            id="hero-pause-icon"
+            class="w-4 h-4 fill-current"
+            viewBox="0 0 24 24"
+          >
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+          </svg>
+          <svg
+            id="hero-play-icon"
+            class="w-4 h-4 fill-current hidden"
+            viewBox="0 0 24 24"
+          >
+            <path d="M8 5v14l11-7z"></path>
           </svg>
         </button>
-        <button id="hero-next-btn" class="p-2 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:border-[#d4af37] transition-all cursor-pointer" title="Siguiente">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        <button
+          id="hero-prev-btn"
+          class="p-2 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:border-[#d4af37] transition-all cursor-pointer"
+          title="Anterior"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button
+          id="hero-next-btn"
+          class="p-2 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:border-[#d4af37] transition-all cursor-pointer"
+          title="Siguiente"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 5l7 7-7 7"></path>
           </svg>
         </button>
       </div>
     </div>
 
     <!-- Fila de Beneficios / Iconos -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl pt-4 border-t border-white/10" id="hero-features">
-      
+    <div
+      class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl pt-4 border-t border-white/10"
+      id="hero-features"
+    >
       <!-- Delivery (Moto) -->
-      <div class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+      <div
+        class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10"
+      >
         <div class="p-2 bg-white/10 rounded-lg text-[#d4af37] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <circle cx="6" cy="17" r="3" />
-            <circle cx="18" cy="17" r="3" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 17h2.5l2.5-6h4.5l2 6h2.5" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11 11L9 7.5H6" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 11h4l1.5-3.5H17" />
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="1.8"
+          >
+            <circle cx="6" cy="17" r="3"></circle>
+            <circle cx="18" cy="17" r="3"></circle>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 17h2.5l2.5-6h4.5l2 6h2.5"></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M11 11L9 7.5H6"></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M14 11h4l1.5-3.5H17"></path>
           </svg>
         </div>
         <div>
-          <h4 class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white">Delivery</h4>
+          <h4
+            class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white"
+          >
+            Delivery
+          </h4>
           <p class="text-[10px] text-white/70">En Caracas</p>
         </div>
       </div>
 
       <!-- Envíos Nacionales (Camión) -->
-      <div class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+      <div
+        class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10"
+      >
         <div class="p-2 bg-white/10 rounded-lg text-[#d4af37] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" />
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="1.8"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z"
+            ></path>
           </svg>
         </div>
         <div>
-          <h4 class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white">Envíos Nacionales</h4>
+          <h4
+            class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white"
+          >
+            Envíos Nacionales
+          </h4>
           <p class="text-[10px] text-white/70">MRW • ZOOM</p>
         </div>
       </div>
 
       <!-- Caja Personalizada -->
-      <div class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+      <div
+        class="flex items-center gap-3 bg-black/50 backdrop-blur-sm p-3 rounded-xl border border-white/10"
+      >
         <div class="p-2 bg-white/10 rounded-lg text-[#d4af37] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            ></path>
           </svg>
         </div>
         <div>
-          <h4 class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white">Caja Personalizada</h4>
+          <h4
+            class="font-body text-[10px] font-extrabold uppercase tracking-widest text-white"
+          >
+            Caja Personalizada
+          </h4>
           <p class="text-[10px] text-white/70">Con Tu Nombre</p>
         </div>
       </div>
-
     </div>
-
   </div>
-
 </section>
 
 <script>
@@ -243,6 +426,9 @@ const fondoHero = homeData?.heroImageUrl
     const dots = document.querySelectorAll("[data-hero-dot]");
     const prevBtn = document.getElementById("hero-prev-btn");
     const nextBtn = document.getElementById("hero-next-btn");
+    const pauseBtn = document.getElementById("hero-pause-btn");
+    const pauseIcon = document.getElementById("hero-pause-icon");
+    const playIcon = document.getElementById("hero-play-icon");
     const container = document.getElementById("hero-slider-container");
     const goOfertasBtn = document.getElementById("hero-go-ofertas-btn");
 
@@ -251,6 +437,9 @@ const fondoHero = homeData?.heroImageUrl
     let currentIndex = 0;
     const totalSlides = 2;
     let autoplayTimer: any = null;
+    let isPaused = false;
+    let isTouchHolding = false;
+    let isHovered = false;
 
     const updateSlider = (index: number) => {
       currentIndex = (index + totalSlides) % totalSlides;
@@ -258,23 +447,44 @@ const fondoHero = homeData?.heroImageUrl
 
       dots.forEach((dot, idx) => {
         if (idx === currentIndex) {
-          dot.className = "w-8 h-2.5 rounded-full bg-[#d4af37] shadow-sm transition-all duration-300 cursor-pointer";
+          dot.className =
+            "w-8 h-2.5 rounded-full bg-[#d4af37] shadow-sm transition-all duration-300 cursor-pointer";
         } else {
-          dot.className = "w-3 h-2.5 rounded-full bg-[#d4af37]/30 hover:bg-[#d4af37]/70 transition-all duration-300 cursor-pointer";
+          dot.className =
+            "w-3 h-2.5 rounded-full bg-[#d4af37]/30 hover:bg-[#d4af37]/70 transition-all duration-300 cursor-pointer";
         }
       });
     };
 
     const startAutoplay = () => {
       stopAutoplay();
+      if (isPaused || isTouchHolding || isHovered) return;
       autoplayTimer = setInterval(() => {
         updateSlider(currentIndex + 1);
-      }, 10000);
+      }, 6000);
     };
 
     const stopAutoplay = () => {
-      if (autoplayTimer) clearInterval(autoplayTimer);
+      if (autoplayTimer) {
+        clearInterval(autoplayTimer);
+        autoplayTimer = null;
+      }
     };
+
+    pauseBtn?.addEventListener("click", () => {
+      isPaused = !isPaused;
+      if (isPaused) {
+        stopAutoplay();
+        pauseIcon?.classList.add("hidden");
+        playIcon?.classList.remove("hidden");
+        pauseBtn.setAttribute("title", "Reanudar reproducción");
+      } else {
+        pauseIcon?.classList.remove("hidden");
+        playIcon?.classList.add("hidden");
+        pauseBtn.setAttribute("title", "Pausar reproducción");
+        startAutoplay();
+      }
+    });
 
     prevBtn?.addEventListener("click", () => {
       stopAutoplay();
@@ -296,46 +506,76 @@ const fondoHero = homeData?.heroImageUrl
       });
     });
 
-    // Soporte táctil y deslizamiento manual (Touch / Drag)
+    // Soporte táctil y deslizamiento manual (Touch / Drag / Hold)
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
 
-    container?.addEventListener("touchstart", (e) => {
-      stopAutoplay();
-      isDragging = true;
-      startX = e.touches[0].clientX;
-    }, { passive: true });
+    container?.addEventListener(
+      "touchstart",
+      (e: TouchEvent) => {
+        isTouchHolding = true;
+        stopAutoplay();
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        currentX = startX;
+      },
+      { passive: true },
+    );
 
-    container?.addEventListener("touchmove", (e) => {
-      if (!isDragging) return;
-      currentX = e.touches[0].clientX;
-    }, { passive: true });
+    container?.addEventListener(
+      "touchmove",
+      (e: TouchEvent) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+      },
+      { passive: true },
+    );
 
-    container?.addEventListener("touchend", () => {
-      if (!isDragging) return;
-      isDragging = false;
-      const diffX = startX - currentX;
-      if (Math.abs(diffX) > 40) {
-        if (diffX > 0) updateSlider(currentIndex + 1);
-        else updateSlider(currentIndex - 1);
+    const handleTouchEnd = () => {
+      isTouchHolding = false;
+      if (isDragging) {
+        isDragging = false;
+        const diffX = startX - currentX;
+        if (Math.abs(diffX) > 40 && currentX !== 0) {
+          if (diffX > 0) updateSlider(currentIndex + 1);
+          else updateSlider(currentIndex - 1);
+        }
+        currentX = 0;
       }
+      startAutoplay();
+    };
+
+    container?.addEventListener("touchend", handleTouchEnd);
+    container?.addEventListener("touchcancel", handleTouchEnd);
+
+    // Pausa al pasar el cursor (Hover en escritorio)
+    container?.addEventListener("mouseenter", () => {
+      isHovered = true;
+      stopAutoplay();
+    });
+
+    container?.addEventListener("mouseleave", () => {
+      isHovered = false;
       startAutoplay();
     });
 
     // Acción del botón en el Banner de Ofertas
     goOfertasBtn?.addEventListener("click", () => {
-      const ofertasBtn = document.querySelector('[data-category-btn="ofertas"]') as HTMLElement | null;
+      const ofertasBtn = document.querySelector(
+        '[data-category-btn="ofertas"]',
+      ) as HTMLElement | null;
       const catalogoSection = document.querySelector("#catalogo");
-      
+
       if (ofertasBtn) {
         ofertasBtn.click();
       }
       if (catalogoSection) {
         const headerOffset = 60;
         const elementPosition = catalogoSection.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        const offsetPosition =
+          elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       }
     });
 
@@ -345,30 +585,48 @@ const fondoHero = homeData?.heroImageUrl
   const initAnimations = () => {
     const img = document.querySelector("#hero img");
     if (img) {
-      gsap.fromTo(img, { scale: 1.05 }, { scale: 1, duration: 2, ease: "power2.out" });
+      gsap.fromTo(
+        img,
+        { scale: 1.05 },
+        { scale: 1, duration: 2, ease: "power2.out" },
+      );
     }
 
     const header = document.querySelector("#hero-header-1");
-    const cards = document.querySelectorAll("#hero-cards-1 > a, #hero-cards-1 > div");
+    const cards = document.querySelectorAll(
+      "#hero-cards-1 > a, #hero-cards-1 > div",
+    );
     const features = document.querySelectorAll("#hero-features > div");
 
     if (header) {
-      gsap.fromTo(header, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.1 });
+      gsap.fromTo(
+        header,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.6, delay: 0.1 },
+      );
     }
 
     if (cards.length > 0) {
-      gsap.fromTo(cards, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, delay: 0.2 });
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, delay: 0.2 },
+      );
     }
 
     if (features.length > 0) {
-      gsap.fromTo(features, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, delay: 0.4 });
+      gsap.fromTo(
+        features,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, delay: 0.4 },
+      );
     }
 
     initHeroSlider();
   };
 
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', initAnimations);
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", initAnimations);
   } else {
     initAnimations();
   }
@@ -376,8 +634,8 @@ const fondoHero = homeData?.heroImageUrl
 
 <style>
   .shadow-premium {
-    text-shadow: 
-      0px 4px 20px rgba(0, 0, 0, 0.7), 
+    text-shadow:
+      0px 4px 20px rgba(0, 0, 0, 0.7),
       0px 2px 4px rgba(0, 0, 0, 0.5);
   }
 </style>
