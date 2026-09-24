@@ -1,0 +1,89 @@
+---
+/**
+ * Componente: CatalogProductImage.astro
+ * Proyecto: VKMEN.com
+ * 
+ * Renderiza la imagen del producto (4:5 / 9:16) en formato limpio y 100% íntegro.
+ * Sin recortes de mask-image, sin padding interno que achique la foto,
+ * garantizando que las fotos 4:5 se vean exactamente completas y de borde a borde.
+ */
+
+interface Props {
+  /** URL de la imagen principal nítida */
+  src: string;
+  /** URL de la imagen de fondo para relleno ambiental. Si se omite, usa `src` */
+  bgSrc?: string;
+  /** Texto alternativo para accesibilidad y SEO */
+  alt: string;
+  /** ID HTML para la imagen frontal */
+  id?: string;
+  /** ID HTML opcional para la imagen de fondo */
+  bgId?: string;
+  /** Proporción de aspecto del contenedor (por defecto 4/5) */
+  aspectRatio?: string;
+  /** Clases CSS adicionales */
+  class?: string;
+  /** Estrategia de carga ('lazy' por defecto o 'eager') */
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  src,
+  bgSrc = src,
+  alt,
+  id,
+  bgId,
+  aspectRatio = "4/5",
+  class: className = "",
+  loading = "lazy"
+} = Astro.props;
+---
+
+<div 
+  class={`catalog-image-card relative w-full overflow-hidden select-none bg-neutral-900 group/catalog-img ${className}`}
+  style={`aspect-ratio: ${aspectRatio};`}
+>
+  <!-- CAPA 1 — Relleno de Fondo Adaptativo para fotos con proporciones distintas -->
+  <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+    <img
+      id={bgId}
+      src={bgSrc}
+      alt=""
+      aria-hidden="true"
+      loading={loading}
+      class="catalog-bg-blur w-full h-full object-cover scale-125 filter blur-2xl opacity-60 brightness-95 transition-all duration-700 ease-out group-hover/catalog-img:scale-135 group-hover/catalog-img:opacity-80"
+    />
+  </div>
+
+  <!-- CAPA 2 — Imagen Principal 100% Completa (Borde a Borde sin recortes ni padding) -->
+  <div class="relative z-10 w-full h-full overflow-hidden">
+    <img
+      id={id}
+      src={src}
+      alt={alt}
+      loading={loading}
+      class="catalog-fg-main w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover/catalog-img:scale-105"
+      style="transition: opacity 0.15s ease-in-out, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);"
+    />
+  </div>
+
+  <!-- Slot para overlays (OFF %, Ver Detalle) -->
+  <slot />
+</div>
+
+<style>
+  .catalog-image-card {
+    aspect-ratio: 4 / 5;
+  }
+  
+  .catalog-bg-blur {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .catalog-fg-main {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+</style>

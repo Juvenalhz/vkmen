@@ -51,9 +51,59 @@ const fondoHero = homeData?.heroImageUrl
         id="hero-track"
         class="flex transition-transform duration-700 ease-out w-full"
       >
-        <!-- SLIDE 1: MYSTERY BOX EXCLUSIVA -->
+        <!-- SLIDE 1: PROMOCIONES Y DESCUENTOS ESPECTACULARES -->
         <div class="w-full flex-shrink-0 min-w-full">
           <div class="mb-6 md:mb-8 text-center md:text-left" id="hero-header-1">
+            <span
+              class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm"
+            >
+              Por tiempo limitado hasta el 3 de Octubre
+            </span>
+            <h1
+              class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg"
+            >
+              Ofertas de Aniversario
+            </h1>
+          </div>
+
+          <!-- Banner Promocional -->
+          <div
+            class="max-w-3xl mb-6 sm:mb-8 bg-gradient-to-r from-black/80 via-neutral-900/80 to-black/80 backdrop-blur-md border border-[#d4af37]/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6"
+            id="hero-cards-1"
+          >
+            <div class="space-y-2 text-center md:text-left">
+              <div
+                class="inline-flex items-center gap-2 bg-[#d4af37] text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md"
+              >
+                <span>HASTA 70% OFF</span>
+              </div>
+              <h2
+                class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-white"
+              >
+                Prendas Seleccionadas en Descuento
+              </h2>
+              <p class="text-xs sm:text-sm text-white/80 max-w-md font-light">
+                Renueva tu estilo con precios de promoción exclusivos por tiempo
+                limitado en nuestra tienda.
+              </p>
+            </div>
+
+            <div
+              class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0"
+            >
+              <button
+                id="hero-go-ofertas-btn"
+                class="w-full sm:w-auto bg-[#d4af37] hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-[0.15em] px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer text-center"
+              >
+                Ver Productos en Oferta
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2: MYSTERY BOX EXCLUSIVA -->
+        <div class="w-full flex-shrink-0 min-w-full">
+          <div class="mb-6 md:mb-8 text-center md:text-left" id="hero-header-2">
             <span
               class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm"
             >
@@ -69,7 +119,6 @@ const fondoHero = homeData?.heroImageUrl
           <!-- Tarjetas de Cajas ($40 / $80) -->
           <div
             class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mb-6 sm:mb-8"
-            id="hero-cards-1"
           >
             <!-- CAJA PEQUEÑA -->
             <a
@@ -188,55 +237,6 @@ const fondoHero = homeData?.heroImageUrl
             </a>
           </div>
         </div>
-
-        <!-- SLIDE 2: PROMOCIONES Y DESCUENTOS ESPECTACULARES -->
-        <div class="w-full flex-shrink-0 min-w-full">
-          <div class="mb-6 md:mb-8 text-center md:text-left" id="hero-header-2">
-            <span
-              class="inline-block font-body text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.4em] text-[#d4af37] bg-[#d4af37]/10 px-3.5 py-1 rounded-full border border-[#d4af37]/30 mb-3 backdrop-blur-sm shadow-sm"
-            >
-              Por tiempo limitado hasta el 3 de Octubre
-            </span>
-            <h1
-              class="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.05em] leading-none uppercase text-white drop-shadow-lg"
-            >
-              Ofertas de Aniversario
-            </h1>
-          </div>
-
-          <!-- Banner Promocional -->
-          <div
-            class="max-w-3xl mb-6 sm:mb-8 bg-gradient-to-r from-black/80 via-neutral-900/80 to-black/80 backdrop-blur-md border border-[#d4af37]/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6"
-          >
-            <div class="space-y-2 text-center md:text-left">
-              <div
-                class="inline-flex items-center gap-2 bg-[#d4af37] text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md"
-              >
-                <span>HASTA 70% OFF</span>
-              </div>
-              <h2
-                class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-white"
-              >
-                Prendas Seleccionadas en Descuento
-              </h2>
-              <p class="text-xs sm:text-sm text-white/80 max-w-md font-light">
-                Renueva tu estilo con precios de promoción exclusivos por tiempo
-                limitado en nuestra tienda.
-              </p>
-            </div>
-
-            <div
-              class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0"
-            >
-              <button
-                id="hero-go-ofertas-btn"
-                class="w-full sm:w-auto bg-[#d4af37] hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-[0.15em] px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer text-center"
-              >
-                Ver Productos en Oferta
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -246,11 +246,11 @@ const fondoHero = homeData?.heroImageUrl
         <button
           data-hero-dot="0"
           class="w-8 h-2.5 rounded-full bg-[#d4af37] shadow-sm transition-all duration-300 cursor-pointer"
-          title="Diapositiva 1 (Mystery Box)"></button>
+          title="Diapositiva 1 (Ofertas)"></button>
         <button
           data-hero-dot="1"
           class="w-3 h-2.5 rounded-full bg-[#d4af37]/30 hover:bg-[#d4af37]/70 transition-all duration-300 cursor-pointer"
-          title="Diapositiva 2 (Ofertas)"></button>
+          title="Diapositiva 2 (Mystery Box)"></button>
       </div>
 
       <div class="flex items-center gap-2">
