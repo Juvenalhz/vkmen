@@ -94,6 +94,13 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
+      name: 'hideFromCatalog',
+      title: '¿Ocultar de la Grilla del Catálogo?',
+      type: 'boolean',
+      description: 'Activa este switch si no deseas que el producto aparezca como tarjeta independiente en la tienda (ideal para prendas que pertenecen a un Set y se venden a través del conjunto).',
+      initialValue: false,
+    }),
+    defineField({
       name: 'isBundle',
       title: '¿Es Producto Receta / Bundle (Conjunto)?',
       type: 'boolean',

@@ -3,9 +3,9 @@
 import { client, urlFor, type Product, type Variant, type ReferencedProduct } from '../lib/sanity';
 import CatalogProductImage from './CatalogProductImage.astro';
 
-// 1. Extraemos los productos de Sanity en una sola petición (incluyendo bundles / recetas)
+// 1. Extraemos los productos de Sanity en una sola petición (filtrando productos ocultos de la grilla)
 const dataQuery = `{
-  "products": *[_type == "product" && (
+  "products": *[_type == "product" && (!defined(hideFromCatalog) || hideFromCatalog == false) && (
     (!defined(isBundle) || isBundle == false) && count(variants[defined(availableSizes) && count(availableSizes) > 0]) > 0
     ||
     (isBundle == true && defined(topProduct) && defined(bottomProduct))
@@ -16,12 +16,16 @@ const dataQuery = `{
     price,
     isOnSale,
     offerPrice,
+    hideFromCatalog,
     isBundle,
     topProduct-> {
       sku,
       name,
       category,
-      variants[defined(availableSizes) && count(availableSizes) > 0] {
+      price,
+      isOnSale,
+      offerPrice,
+      variants[] {
         colorName,
         availableSizes
       }
@@ -30,7 +34,10 @@ const dataQuery = `{
       sku,
       name,
       category,
-      variants[defined(availableSizes) && count(availableSizes) > 0] {
+      price,
+      isOnSale,
+      offerPrice,
+      variants[] {
         colorName,
         availableSizes
       }
@@ -147,9 +154,42 @@ const categories = [
 
 <section id="catalogo" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 relative">
   
-  <div class="border-b border-neutral-100 pb-4 mb-10">
+  <div class="border-b border-neutral-100 pb-6 mb-10 space-y-5">
+    
+    <!-- Motor de Búsqueda Minimalista e Innovador VKMEN -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="relative flex-1 max-w-md">
+        <div class="relative flex items-center border-b border-neutral-200 focus-within:border-neutral-900 transition-colors duration-300 pb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-neutral-400 shrink-0 mr-3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
+          </svg>
+          <input 
+            id="catalog-search-input" 
+            type="text" 
+            placeholder="Buscar por producto, colección, color o SKU..." 
+            class="w-full text-xs font-mono tracking-wider text-neutral-900 placeholder:text-neutral-400 bg-transparent focus:outline-none"
+            autocomplete="off"
+          />
+          <button 
+            id="clear-catalog-search-btn" 
+            class="hidden text-neutral-300 hover:text-neutral-900 transition-colors p-1 cursor-pointer"
+            title="Limpiar búsqueda"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contador Dinámico de Prendas -->
+      <span id="catalog-count-badge" class="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-400 shrink-0">
+        Mostrando <span id="catalog-visible-count" class="text-neutral-900 font-extrabold">{products.length}</span> prendas
+      </span>
+    </div>
+
+    <!-- Barra de Categorías Horizontal -->
     <div class="relative w-full overflow-hidden flex flex-col gap-3">
-      <!-- Barra de Categorías Horizontal -->
       <div class="flex items-center overflow-x-auto gap-4 sm:gap-8 no-scrollbar py-1 w-full pl-0.5 pr-8">
         {categories.map((cat) => (
           <button
@@ -210,6 +250,16 @@ const categories = [
       const discountPercent = isEffectiveOffer ? Math.round(((product.price - product.offerPrice!) / product.price) * 100) : 0;
       const effectivePrice = isEffectiveOffer ? product.offerPrice! : product.price;
 
+      const topProd = product.topProduct;
+      const topIsOffer = Boolean(topProd?.isOnSale && typeof topProd?.offerPrice === 'number' && topProd.offerPrice < (topProd.price || 0));
+      const topPrice = topProd?.price || 0;
+      const topEffectivePrice = topIsOffer ? topProd!.offerPrice! : topPrice;
+
+      const bottomProd = product.bottomProduct;
+      const bottomIsOffer = Boolean(bottomProd?.isOnSale && typeof bottomProd?.offerPrice === 'number' && bottomProd.offerPrice < (bottomProd.price || 0));
+      const bottomPrice = bottomProd?.price || 0;
+      const bottomEffectivePrice = bottomIsOffer ? bottomProd!.offerPrice! : bottomPrice;
+
       const topLabel = product.topProduct?.name || 'Camisa';
       const bottomLabel = product.bottomProduct?.name || 'Short';
 
@@ -218,6 +268,15 @@ const categories = [
       const defaultSizesDisplay = isBundle 
         ? ((defaultTopSizes.length > 0 && defaultBottomSizes.length > 0) ? `Top: ${defaultTopSizes.join('·')} | Bot: ${defaultBottomSizes.join('·')}` : 'Agotado')
         : ((defaultVariant && defaultVariant.availableSizes && Array.isArray(defaultVariant.availableSizes)) ? defaultVariant.availableSizes.join(' · ') : 'Agotado');
+
+      const searchKeywords = [
+        product.name,
+        product.sku,
+        product.category,
+        topLabel,
+        bottomLabel,
+        ...(product.variants || []).map((v: Variant) => v.colorName)
+      ].filter(Boolean).join(' ').toLowerCase();
 
       const productDataJson = JSON.stringify({
         name: product.name,
@@ -233,6 +292,20 @@ const categories = [
         isBundle,
         topLabel,
         bottomLabel,
+        topProduct: topProd ? {
+          sku: topProd.sku,
+          name: topProd.name,
+          price: topPrice,
+          effectivePrice: topEffectivePrice,
+          formattedPrice: formatPrice(topEffectivePrice)
+        } : null,
+        bottomProduct: bottomProd ? {
+          sku: bottomProd.sku,
+          name: bottomProd.name,
+          price: bottomPrice,
+          effectivePrice: bottomEffectivePrice,
+          formattedPrice: formatPrice(bottomEffectivePrice)
+        } : null,
         variants: productVariants.map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
           const firstImgUrls = getCatalogImages(validImages[0]);
@@ -260,6 +333,7 @@ const categories = [
         <div 
           data-product-card={product.category} 
           data-is-on-sale={isEffectiveOffer ? "true" : "false"}
+          data-product-search={searchKeywords}
           class="group bg-white flex flex-col justify-between"
         >
           {/* Contenedor de Imagen con CatalogProductImage */}
@@ -347,11 +421,27 @@ const categories = [
         </div>
       );
     })}
+
+    <!-- Mensaje Elegante cuando no hay resultados de búsqueda -->
+    <div id="no-products-found" class="hidden col-span-full py-20 text-center flex-col items-center justify-center space-y-4 bg-neutral-50/60 rounded-2xl border border-dashed border-neutral-200">
+      <div class="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mx-auto shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
+        </svg>
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-neutral-900">Sin resultados de búsqueda</h3>
+        <p class="text-xs text-neutral-400 max-w-sm mx-auto">No encontramos ninguna prenda que coincida con "<span id="search-query-highlight" class="font-bold text-neutral-700"></span>".</p>
+      </div>
+      <button id="reset-search-btn" class="text-[10px] font-bold uppercase tracking-widest bg-neutral-900 text-white px-6 py-2.5 hover:bg-neutral-800 transition-all cursor-pointer shadow-sm">
+        Limpiar Búsqueda
+      </button>
+    </div>
   </div>
 
   <!-- Modal de Detalle de Producto -->
-  <div id="product-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto rounded-none flex flex-col md:flex-row relative shadow-2xl">
+  <div id="product-modal" data-lenis-prevent class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div id="product-modal-content" data-lenis-prevent tabindex="0" class="bg-white w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto rounded-none flex flex-col md:flex-row relative shadow-2xl overscroll-contain outline-none">
       
       <button id="close-modal" class="absolute top-4 right-4 z-20 p-2 text-neutral-400 hover:text-neutral-900 cursor-pointer bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -359,7 +449,7 @@ const categories = [
         </svg>
       </button>
 
-      <!-- Visor de Imagen en Modal (Proporción 4:5 Completa de Borde a Borde) -->
+      <!-- Visor de Imagen en Modal (Proporción 4:5 Completa) -->
       <div id="modal-img-container" class="w-full md:w-1/2 bg-white flex flex-col justify-between border-b md:border-b-0 md:border-r border-neutral-100 transition-all duration-300">
         <div class="w-full aspect-[4/5] overflow-hidden relative group/zoom bg-neutral-50">
           <img id="modal-img" src="" alt="" class="w-full h-full object-cover object-top transition-all duration-300 cursor-zoom-in" style="transition: opacity 0.15s ease-in-out;">
@@ -368,33 +458,38 @@ const categories = [
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637zM10.5 7.5v6m3-3h-6" />
             </svg>
           </div>
+
+          <!-- Miniaturas Flotantes Verticales en la Esquina Superior Izquierda -->
+          <div id="modal-thumbnails-container" class="absolute top-4 left-4 z-20 hidden flex-col gap-2.5 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl max-h-[85%] overflow-y-auto no-scrollbar border border-white/60 transition-all duration-300"></div>
         </div>
-        <div id="modal-thumbnails-container" class="hidden gap-2 px-4 mt-3 bg-white overflow-x-auto no-scrollbar justify-start"></div>
       </div>
 
-      <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-between bg-white">
-        <div class="space-y-6">
+      <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between bg-white">
+        <div class="space-y-5">
           <div>
             <span id="modal-sku" class="text-[10px] font-mono tracking-widest text-neutral-400 uppercase"></span>
             <h2 id="modal-title" class="text-xl font-light tracking-wide text-neutral-900 uppercase font-serif mt-1"></h2>
             <p id="modal-price" class="text-lg font-bold text-neutral-900 mt-2"></p>
           </div>
 
+          <!-- Pestañas de Selección de Modo (Conjunto vs Piezas Individuales) -->
+          <div id="modal-bundle-mode-container" class="hidden"></div>
+
           <div>
-            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Color disponible</p>
+            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Color disponible</p>
             <div id="modal-colors-container" class="flex gap-3"></div>
           </div>
 
           <div>
-            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-3">Selecciona tu talla</p>
+            <p id="modal-sizes-label" class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Selecciona tu talla</p>
             <div id="modal-sizes-container" class="flex flex-wrap gap-2"></div>
           </div>
         </div>
 
-        <div class="mt-8">
+        <div class="mt-6 pt-2">
           <button 
             id="modal-add-to-cart-btn"
-            class="w-full block text-center bg-neutral-900 text-white text-xs font-semibold tracking-[0.2em] uppercase py-4 hover:bg-neutral-800 transition-all cursor-pointer disabled:opacity-50"
+            class="w-full block text-center bg-neutral-900 text-white text-xs font-semibold tracking-[0.2em] uppercase py-3.5 hover:bg-neutral-800 transition-all cursor-pointer disabled:opacity-50"
           >
             Añadir al Carrito
           </button>
@@ -471,15 +566,23 @@ const categories = [
     }
   });
 
-  // --- 2. FILTRADO REVOLUCIONARIO DE CATEGORÍAS Y MODO OFERTAS ---
+  // --- 2. FILTRADO REVOLUCIONARIO DE CATEGORÍAS, BÚSQUEDA Y MODO OFERTAS ---
   const catButtons = document.querySelectorAll('[data-category-btn]');
   const productCards = document.querySelectorAll('[data-product-card]');
   const offersActiveBanner = document.getElementById('offers-active-banner');
   const offersActiveText = document.getElementById('offers-active-text');
   const clearOffersBtn = document.getElementById('clear-offers-mode-btn');
 
+  const searchInput = document.getElementById('catalog-search-input') as HTMLInputElement | null;
+  const clearSearchBtn = document.getElementById('clear-catalog-search-btn');
+  const visibleCountEl = document.getElementById('catalog-visible-count');
+  const noProductsFoundEl = document.getElementById('no-products-found');
+  const searchQueryHighlight = document.getElementById('search-query-highlight');
+  const resetSearchBtn = document.getElementById('reset-search-btn');
+
   let activeCategory = 'all';
   let isOffersOnlyActive = false;
+  let searchQuery = '';
 
   const updateFilteringUI = () => {
     catButtons.forEach(btn => {
@@ -517,20 +620,71 @@ const categories = [
       }
     }
 
+    let visibleCount = 0;
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
     productCards.forEach(card => {
       const productCategory = card.getAttribute('data-product-card');
       const isOnSale = card.getAttribute('data-is-on-sale') === 'true';
+      const searchData = card.getAttribute('data-product-search') || '';
 
       const matchesCategory = (activeCategory === 'all' || productCategory === activeCategory);
       const matchesOffers = (!isOffersOnlyActive || isOnSale);
+      const matchesSearch = (!normalizedQuery || searchData.includes(normalizedQuery));
 
-      if (matchesCategory && matchesOffers) {
+      if (matchesCategory && matchesOffers && matchesSearch) {
         (card as HTMLElement).style.display = 'flex';
+        visibleCount++;
       } else {
         (card as HTMLElement).style.display = 'none';
       }
     });
+
+    if (visibleCountEl) {
+      visibleCountEl.textContent = visibleCount.toString();
+    }
+
+    if (noProductsFoundEl) {
+      if (visibleCount === 0) {
+        noProductsFoundEl.classList.remove('hidden');
+        noProductsFoundEl.classList.add('flex');
+        if (searchQueryHighlight) {
+          searchQueryHighlight.textContent = searchQuery;
+        }
+      } else {
+        noProductsFoundEl.classList.remove('flex');
+        noProductsFoundEl.classList.add('hidden');
+      }
+    }
+
+    if (clearSearchBtn) {
+      if (normalizedQuery.length > 0) {
+        clearSearchBtn.classList.remove('hidden');
+      } else {
+        clearSearchBtn.classList.add('hidden');
+      }
+    }
   };
+
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target as HTMLInputElement).value;
+    updateFilteringUI();
+  });
+
+  clearSearchBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    searchQuery = '';
+    updateFilteringUI();
+    searchInput?.focus();
+  });
+
+  resetSearchBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    searchQuery = '';
+    activeCategory = 'all';
+    isOffersOnlyActive = false;
+    updateFilteringUI();
+  });
 
   catButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -654,7 +808,9 @@ const categories = [
   const modalSku = document.getElementById('modal-sku') as HTMLElement | null;
   const modalTitle = document.getElementById('modal-title') as HTMLElement | null;
   const modalPrice = document.getElementById('modal-price') as HTMLElement | null;
+  const modalBundleModeContainer = document.getElementById('modal-bundle-mode-container') as HTMLElement | null;
   const modalColorsContainer = document.getElementById('modal-colors-container') as HTMLElement | null;
+  const modalSizesLabel = document.getElementById('modal-sizes-label') as HTMLElement | null;
   const modalSizesContainer = document.getElementById('modal-sizes-container') as HTMLElement | null;
   const modalThumbnailsContainer = document.getElementById('modal-thumbnails-container') as HTMLElement | null;
   const addToCartBtn = document.getElementById('modal-add-to-cart-btn') as HTMLButtonElement | null;
@@ -667,6 +823,7 @@ const categories = [
   let activeSize: string = '';
   let activeTopSize: string = '';
   let activeBottomSize: string = '';
+  let activePurchaseMode: 'full' | 'top' | 'bottom' = 'full';
 
   openModalElements.forEach(element => {
     element.addEventListener('click', () => {
@@ -680,7 +837,8 @@ const categories = [
       const activeIndex = card ? parseInt(card.getAttribute('data-active-variant-index') || '0', 10) : 0;
 
       activeProduct = JSON.parse(rawData);
-      activeVariant = activeProduct.variants[activeIndex] || activeProduct.variants[0];
+      activeVariant = activeProduct.variants?.[activeIndex] || activeProduct.variants?.[0];
+      activePurchaseMode = 'full';
 
       if (activeProduct.isBundle) {
         const topSizes = activeVariant?.topSizes || [];
@@ -694,6 +852,116 @@ const categories = [
         const initialSizes = activeVariant?.availableSizes || [];
         activeSize = initialSizes[0] || '';
       }
+
+      const updateHeaderAndPrice = () => {
+        if (!activeProduct) return;
+
+        if (activeProduct.isBundle) {
+          if (activePurchaseMode === 'full') {
+            if (modalSku) modalSku.textContent = `SKU CONJUNTO: ${activeProduct.sku}`;
+            if (modalTitle) modalTitle.textContent = activeProduct.name;
+            if (modalPrice) {
+              if (activeProduct.isOnSale) {
+                modalPrice.innerHTML = `
+                  <div class="flex items-center gap-3 mt-2">
+                    <span class="text-xl font-black text-neutral-900">${activeProduct.formattedPrice}</span>
+                    <span class="text-base font-mono text-neutral-400 line-through">${activeProduct.formattedOriginalPrice}</span>
+                    <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                      <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                      ${activeProduct.discountPercent}% OFF
+                    </span>
+                  </div>
+                `;
+              } else {
+                modalPrice.textContent = activeProduct.formattedPrice;
+              }
+            }
+          } else if (activePurchaseMode === 'top') {
+            const top = activeProduct.topProduct;
+            if (modalSku) modalSku.textContent = `SKU: ${top?.sku || activeProduct.sku}`;
+            if (modalTitle) modalTitle.textContent = top?.name || activeProduct.topLabel || 'Prenda Superior';
+            if (modalPrice) modalPrice.textContent = top?.formattedPrice || activeProduct.formattedPrice;
+          } else if (activePurchaseMode === 'bottom') {
+            const bottom = activeProduct.bottomProduct;
+            if (modalSku) modalSku.textContent = `SKU: ${bottom?.sku || activeProduct.sku}`;
+            if (modalTitle) modalTitle.textContent = bottom?.name || activeProduct.bottomLabel || 'Prenda Inferior';
+            if (modalPrice) modalPrice.textContent = bottom?.formattedPrice || activeProduct.formattedPrice;
+          }
+        } else {
+          if (modalSku) modalSku.textContent = `SKU: ${activeProduct.sku}`;
+          if (modalTitle) modalTitle.textContent = activeProduct.name;
+          if (modalPrice) {
+            if (activeProduct.isOnSale) {
+              modalPrice.innerHTML = `
+                <div class="flex items-center gap-3 mt-2">
+                  <span class="text-xl font-black text-neutral-900">${activeProduct.formattedPrice}</span>
+                  <span class="text-base font-mono text-neutral-400 line-through">${activeProduct.formattedOriginalPrice}</span>
+                  <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                    ${activeProduct.discountPercent}% OFF
+                  </span>
+                </div>
+              `;
+            } else {
+              modalPrice.textContent = activeProduct.formattedPrice || (activeProduct.currencySymbol === '$' ? `$ ${activeProduct.price}` : `${activeProduct.price} €`);
+            }
+          }
+        }
+      };
+
+      const renderPurchaseModeTabs = () => {
+        if (!modalBundleModeContainer) return;
+
+        if (!activeProduct.isBundle) {
+          modalBundleModeContainer.innerHTML = '';
+          modalBundleModeContainer.classList.add('hidden');
+          if (modalSizesLabel) modalSizesLabel.textContent = 'Selecciona tu talla';
+          return;
+        }
+
+        modalBundleModeContainer.classList.remove('hidden');
+        if (modalSizesLabel) {
+          modalSizesLabel.textContent = activePurchaseMode === 'full' 
+            ? 'Selecciona las tallas del conjunto' 
+            : `Selecciona tu talla (${activePurchaseMode === 'top' ? activeProduct.topLabel : activeProduct.bottomLabel})`;
+        }
+
+        const topName = activeProduct.topLabel || 'Camisa';
+        const bottomName = activeProduct.bottomLabel || 'Short';
+
+        modalBundleModeContainer.innerHTML = `
+          <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2">Opción de Compra</p>
+          <div class="grid grid-cols-3 gap-2 p-1 bg-neutral-100 rounded-lg">
+            <button type="button" data-mode-btn="full" class="text-center py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
+              activePurchaseMode === 'full' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
+            }">
+              Conjunto
+            </button>
+            <button type="button" data-mode-btn="top" class="text-center py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
+              activePurchaseMode === 'top' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
+            }">
+              Sólo ${topName}
+            </button>
+            <button type="button" data-mode-btn="bottom" class="text-center py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
+              activePurchaseMode === 'bottom' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
+            }">
+              Sólo ${bottomName}
+            </button>
+          </div>
+        `;
+
+        modalBundleModeContainer.querySelectorAll('[data-mode-btn]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const mode = btn.getAttribute('data-mode-btn') as 'full' | 'top' | 'bottom';
+            if (mode) {
+              activePurchaseMode = mode;
+              renderPurchaseModeTabs();
+              updateHeaderAndPrice();
+              updateModalContent(activeVariant);
+            }
+          });
+        });
+      };
 
       const updateModalContent = async (variant: any) => {
         activeVariant = variant;
@@ -722,20 +990,22 @@ const categories = [
           }
         }
         
-        if (modalThumbnailsContainer && modalImgContainer) {
+        if (modalThumbnailsContainer) {
           modalThumbnailsContainer.innerHTML = '';
           if (variant?.images && variant.images.length > 1) {
             modalThumbnailsContainer.classList.remove('hidden');
             modalThumbnailsContainer.classList.add('flex');
-            modalImgContainer.classList.add('pb-4');
 
             variant.images.forEach((imgUrl: string, idx: number) => {
               const thumbBtn = document.createElement('button');
-              thumbBtn.className = `w-14 h-18 bg-white border overflow-hidden cursor-pointer flex-shrink-0 transition-all ${idx === 0 ? 'border-neutral-900 opacity-100' : 'border-neutral-200 opacity-60 hover:opacity-100'}`;
+              thumbBtn.type = 'button';
+              thumbBtn.className = `w-12 h-14 rounded-lg bg-white border overflow-hidden cursor-pointer flex-shrink-0 transition-all transform hover:scale-105 ${
+                idx === 0 ? 'border-neutral-900 ring-2 ring-neutral-900/30 opacity-100 scale-105' : 'border-neutral-200 opacity-70 hover:opacity-100'
+              }`;
               
               const thumbImg = document.createElement('img');
               thumbImg.src = imgUrl;
-              thumbImg.className = 'w-full h-full object-cover object-center';
+              thumbImg.className = 'w-full h-full object-cover object-top';
               thumbBtn.appendChild(thumbImg);
               
               thumbBtn.addEventListener('click', async () => {
@@ -750,11 +1020,9 @@ const categories = [
                 }
                 const allThumbs = modalThumbnailsContainer.querySelectorAll('button');
                 allThumbs.forEach(b => {
-                  b.classList.remove('border-neutral-900', 'opacity-100');
-                  b.classList.add('border-neutral-200', 'opacity-60');
+                  b.className = 'w-12 h-14 rounded-lg bg-white border border-neutral-200 opacity-70 hover:opacity-100 overflow-hidden cursor-pointer flex-shrink-0 transition-all transform hover:scale-105';
                 });
-                thumbBtn.classList.remove('border-neutral-200', 'opacity-60');
-                thumbBtn.classList.add('border-neutral-900', 'opacity-100');
+                thumbBtn.className = 'w-12 h-14 rounded-lg bg-white border border-neutral-900 ring-2 ring-neutral-900/30 opacity-100 scale-105 overflow-hidden cursor-pointer flex-shrink-0 transition-all transform';
               });
 
               modalThumbnailsContainer.appendChild(thumbBtn);
@@ -762,7 +1030,6 @@ const categories = [
           } else {
             modalThumbnailsContainer.classList.remove('flex');
             modalThumbnailsContainer.classList.add('hidden');
-            modalImgContainer.classList.remove('pb-4');
           }
         }
 
@@ -773,101 +1040,144 @@ const categories = [
             const topSizes: string[] = variant?.topSizes || [];
             const bottomSizes: string[] = variant?.bottomSizes || [];
 
-            if (topSizes.length === 0 || bottomSizes.length === 0) {
-              modalSizesContainer.innerHTML = `
-                <div class="w-full bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 rounded-md font-medium">
-                  ⚠️ Este conjunto no tiene stock disponible en este color.
-                </div>
-              `;
-              if (addToCartBtn) {
-                addToCartBtn.disabled = true;
-                addToCartBtn.textContent = 'Agotado';
-                addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            if (activePurchaseMode === 'full') {
+              if (topSizes.length === 0 || bottomSizes.length === 0) {
+                modalSizesContainer.innerHTML = `
+                  <div class="w-full bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 rounded-md font-medium">
+                    ⚠️ Este conjunto no tiene stock disponible para esta combinación.
+                  </div>
+                `;
+                if (addToCartBtn) {
+                  addToCartBtn.disabled = true;
+                  addToCartBtn.textContent = 'Agotado';
+                  addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                return;
               }
-              return;
+
+              if (!topSizes.includes(activeTopSize)) activeTopSize = topSizes[0] || '';
+              if (!bottomSizes.includes(activeBottomSize)) activeBottomSize = bottomSizes[0] || '';
+
+              const updateCombinedSize = () => {
+                activeSize = `Conjunto: ${activeProduct.topLabel || 'Camisa'} ${activeTopSize} + ${activeProduct.bottomLabel || 'Short'} ${activeBottomSize}`;
+                const summaryEl = document.getElementById('bundle-size-summary');
+                if (summaryEl) {
+                  summaryEl.textContent = activeSize;
+                }
+              };
+
+              const wrapper = document.createElement('div');
+              wrapper.className = 'w-full space-y-4';
+
+              // Bloque Superior
+              const topSection = document.createElement('div');
+              topSection.className = 'space-y-1.5';
+              topSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">1. Talla Superior (${activeProduct.topLabel || 'Camisa'})</p>`;
+              const topBtnsDiv = document.createElement('div');
+              topBtnsDiv.className = 'flex flex-wrap gap-2';
+
+              topSizes.forEach((sizeStr: string) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                  sizeStr === activeTopSize
+                    ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                    : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                }`;
+                btn.textContent = sizeStr;
+                btn.addEventListener('click', () => {
+                  activeTopSize = sizeStr;
+                  topBtnsDiv.querySelectorAll('button').forEach(b => {
+                    b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                  });
+                  btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+                  updateCombinedSize();
+                });
+                topBtnsDiv.appendChild(btn);
+              });
+              topSection.appendChild(topBtnsDiv);
+              wrapper.appendChild(topSection);
+
+              // Bloque Inferior
+              const bottomSection = document.createElement('div');
+              bottomSection.className = 'space-y-1.5';
+              bottomSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">2. Talla Inferior (${activeProduct.bottomLabel || 'Short'})</p>`;
+              const bottomBtnsDiv = document.createElement('div');
+              bottomBtnsDiv.className = 'flex flex-wrap gap-2';
+
+              bottomSizes.forEach((sizeStr: string) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                  sizeStr === activeBottomSize
+                    ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                    : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                }`;
+                btn.textContent = sizeStr;
+                btn.addEventListener('click', () => {
+                  activeBottomSize = sizeStr;
+                  bottomBtnsDiv.querySelectorAll('button').forEach(b => {
+                    b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                  });
+                  btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+                  updateCombinedSize();
+                });
+                bottomBtnsDiv.appendChild(btn);
+              });
+              bottomSection.appendChild(bottomBtnsDiv);
+              wrapper.appendChild(bottomSection);
+
+              modalSizesContainer.appendChild(wrapper);
+              updateCombinedSize();
+            } else {
+              // Modo Pieza Única (Sólo Top o Sólo Bottom)
+              const singleSizes = activePurchaseMode === 'top' ? topSizes : bottomSizes;
+              const labelName = activePurchaseMode === 'top' ? (activeProduct.topLabel || 'Camisa') : (activeProduct.bottomLabel || 'Short');
+
+              if (singleSizes.length === 0) {
+                modalSizesContainer.innerHTML = `
+                  <div class="w-full bg-neutral-100 text-neutral-500 text-xs px-4 py-2 rounded-md font-mono">
+                    Agotado para ${labelName}
+                  </div>
+                `;
+                if (addToCartBtn) {
+                  addToCartBtn.disabled = true;
+                  addToCartBtn.textContent = 'Agotado';
+                  addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                return;
+              }
+
+              let currentSelected = activePurchaseMode === 'top' ? activeTopSize : activeBottomSize;
+              if (!singleSizes.includes(currentSelected)) {
+                currentSelected = singleSizes[0] || '';
+                if (activePurchaseMode === 'top') activeTopSize = currentSelected;
+                else activeBottomSize = currentSelected;
+              }
+              activeSize = currentSelected;
+
+              singleSizes.forEach((sizeStr: string) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                  sizeStr === currentSelected
+                    ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                    : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                }`;
+                btn.textContent = sizeStr;
+                btn.addEventListener('click', () => {
+                  if (activePurchaseMode === 'top') activeTopSize = sizeStr;
+                  else activeBottomSize = sizeStr;
+                  activeSize = sizeStr;
+
+                  modalSizesContainer.querySelectorAll('button').forEach(b => {
+                    b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                  });
+                  btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+                });
+                modalSizesContainer.appendChild(btn);
+              });
             }
-
-            if (!topSizes.includes(activeTopSize)) activeTopSize = topSizes[0] || '';
-            if (!bottomSizes.includes(activeBottomSize)) activeBottomSize = bottomSizes[0] || '';
-
-            const updateCombinedSize = () => {
-              activeSize = `Conjunto: ${activeProduct.topLabel || 'Camisa'} ${activeTopSize} + ${activeProduct.bottomLabel || 'Short'} ${activeBottomSize}`;
-              const summaryEl = document.getElementById('bundle-size-summary');
-              if (summaryEl) {
-                summaryEl.textContent = activeSize;
-              }
-            };
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'w-full space-y-4';
-
-            // Caja de Resumen Elegido
-            const summaryBadge = document.createElement('div');
-            summaryBadge.className = 'bg-neutral-100 border border-neutral-200 rounded-md p-3 text-xs font-mono font-bold text-neutral-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1';
-            summaryBadge.innerHTML = `
-              <span class="text-[10px] text-neutral-500 uppercase tracking-widest">Combinación Elegida:</span>
-              <span id="bundle-size-summary" class="text-neutral-900 font-extrabold text-xs"></span>
-            `;
-            wrapper.appendChild(summaryBadge);
-
-            // Bloque Prenda Superior
-            const topSection = document.createElement('div');
-            topSection.className = 'space-y-1.5';
-            topSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">1. Talla Superior (${activeProduct.topLabel || 'Camisa'})</p>`;
-            const topBtnsDiv = document.createElement('div');
-            topBtnsDiv.className = 'flex flex-wrap gap-2';
-
-            topSizes.forEach((sizeStr: string) => {
-              const btn = document.createElement('button');
-              btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
-                sizeStr === activeTopSize
-                  ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
-                  : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
-              }`;
-              btn.textContent = sizeStr;
-              btn.addEventListener('click', () => {
-                activeTopSize = sizeStr;
-                topBtnsDiv.querySelectorAll('button').forEach(b => {
-                  b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
-                });
-                btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
-                updateCombinedSize();
-              });
-              topBtnsDiv.appendChild(btn);
-            });
-            topSection.appendChild(topBtnsDiv);
-            wrapper.appendChild(topSection);
-
-            // Bloque Prenda Inferior
-            const bottomSection = document.createElement('div');
-            bottomSection.className = 'space-y-1.5';
-            bottomSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">2. Talla Inferior (${activeProduct.bottomLabel || 'Short'})</p>`;
-            const bottomBtnsDiv = document.createElement('div');
-            bottomBtnsDiv.className = 'flex flex-wrap gap-2';
-
-            bottomSizes.forEach((sizeStr: string) => {
-              const btn = document.createElement('button');
-              btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
-                sizeStr === activeBottomSize
-                  ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
-                  : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
-              }`;
-              btn.textContent = sizeStr;
-              btn.addEventListener('click', () => {
-                activeBottomSize = sizeStr;
-                bottomBtnsDiv.querySelectorAll('button').forEach(b => {
-                  b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
-                });
-                btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
-                updateCombinedSize();
-              });
-              bottomBtnsDiv.appendChild(btn);
-            });
-            bottomSection.appendChild(bottomBtnsDiv);
-            wrapper.appendChild(bottomSection);
-
-            modalSizesContainer.appendChild(wrapper);
-            updateCombinedSize();
 
             if (addToCartBtn) {
               addToCartBtn.disabled = false;
@@ -897,6 +1207,7 @@ const categories = [
 
             sizesList.forEach((size: string) => {
               const sizeBtn = document.createElement('button');
+              sizeBtn.type = 'button';
               sizeBtn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
                 size === activeSize 
                   ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm' 
@@ -925,32 +1236,17 @@ const categories = [
         }
       };
 
-      if (modalSku) modalSku.textContent = `SKU: ${activeProduct.sku}`;
-      if (modalTitle) modalTitle.textContent = activeProduct.name;
-      if (modalPrice) {
-        if (activeProduct.isOnSale) {
-          modalPrice.innerHTML = `
-            <div class="flex items-center gap-3 mt-2">
-              <span class="text-xl font-black text-neutral-900">${activeProduct.formattedPrice}</span>
-              <span class="text-base font-mono text-neutral-400 line-through">${activeProduct.formattedOriginalPrice}</span>
-              <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
-                ${activeProduct.discountPercent}% OFF
-              </span>
-            </div>
-          `;
-        } else {
-          modalPrice.textContent = activeProduct.formattedPrice || (activeProduct.currencySymbol === '$' ? `$ ${activeProduct.price}` : `${activeProduct.price} €`);
-        }
-      }
+      updateHeaderAndPrice();
+      renderPurchaseModeTabs();
       
       if (modalColorsContainer) {
         modalColorsContainer.innerHTML = '';
         activeProduct.variants?.forEach((v: any, index: number) => {
           const btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = `w-6 h-6 rounded-full border border-neutral-300 block cursor-pointer transition-all ${index === activeIndex ? 'ring-1 ring-neutral-900 ring-offset-2' : ''}`;
-          btn.style.backgroundColor = v.colorHex;
-          btn.title = v.colorName;
+          btn.style.backgroundColor = v.colorHex || '#111827';
+          btn.title = v.colorName || 'Color';
           
           btn.addEventListener('click', () => {
             const allModalColorBtns = modalColorsContainer.querySelectorAll('button');
@@ -965,19 +1261,56 @@ const categories = [
 
       updateModalContent(activeVariant);
       modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      setTimeout(() => {
+        const contentBox = document.getElementById('product-modal-content');
+        if (contentBox) contentBox.focus();
+      }, 50);
     });
   });
+
+  if (modal) {
+    modal.addEventListener('wheel', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+
+    modal.addEventListener('touchmove', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+  }
 
   addToCartBtn?.addEventListener('click', () => {
     if (!activeProduct || !activeVariant) return;
 
+    let itemSku = activeProduct.sku;
+    let itemName = activeProduct.name;
+    let itemPrice = activeProduct.effectivePrice !== undefined ? activeProduct.effectivePrice : activeProduct.price;
+    let itemSize = activeSize;
+
+    if (activeProduct.isBundle) {
+      if (activePurchaseMode === 'top') {
+        const top = activeProduct.topProduct;
+        itemSku = top?.sku || activeProduct.sku;
+        itemName = top?.name || `${activeProduct.name} (${activeProduct.topLabel || 'Camisa'})`;
+        itemPrice = top?.effectivePrice !== undefined ? top.effectivePrice : (top?.price || itemPrice);
+        itemSize = activeTopSize;
+      } else if (activePurchaseMode === 'bottom') {
+        const bottom = activeProduct.bottomProduct;
+        itemSku = bottom?.sku || activeProduct.sku;
+        itemName = bottom?.name || `${activeProduct.name} (${activeProduct.bottomLabel || 'Short'})`;
+        itemPrice = bottom?.effectivePrice !== undefined ? bottom.effectivePrice : (bottom?.price || itemPrice);
+        itemSize = activeBottomSize;
+      }
+    }
+
     addCartItem({
-      sku: activeProduct.sku,
-      name: activeProduct.name,
-      price: activeProduct.effectivePrice !== undefined ? activeProduct.effectivePrice : activeProduct.price,
-      colorName: activeVariant.colorName,
-      colorHex: activeVariant.colorHex,
-      size: activeSize,
+      sku: itemSku,
+      name: itemName,
+      price: itemPrice,
+      colorName: activeVariant.colorName || 'Único',
+      colorHex: activeVariant.colorHex || '#111827',
+      size: itemSize,
       image: activeVariant.images?.[0] || ''
     });
 

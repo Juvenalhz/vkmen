@@ -20,6 +20,9 @@ export interface ReferencedProduct {
   sku: string;
   name: string;
   category?: string;
+  price?: number;
+  isOnSale?: boolean;
+  offerPrice?: number;
   variants?: Array<{
     colorName: string;
     availableSizes: string[];
@@ -51,6 +54,7 @@ export interface Product {
   price: number;
   isOnSale?: boolean;
   offerPrice?: number;
+  hideFromCatalog?: boolean;
   isBundle?: boolean;
   topProduct?: ReferencedProduct;
   bottomProduct?: ReferencedProduct;
