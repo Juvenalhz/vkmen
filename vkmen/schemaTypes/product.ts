@@ -93,6 +93,45 @@ export default defineType({
       description: 'Activa este interruptor para que aparezca en la página de inicio como tendencia.',
       initialValue: false,
     }),
+    defineField({
+      name: 'isBundle',
+      title: '¿Es Producto Receta / Bundle (Conjunto)?',
+      type: 'boolean',
+      description: 'Activa este interruptor si este producto es un conjunto promocional compuesto por dos prendas individuales (Ej: Camisa + Short).',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'topProduct',
+      title: 'Prenda Superior (Camisa / Prenda Top)',
+      type: 'reference',
+      to: [{ type: 'product' }],
+      description: 'Selecciona el producto individual de la prenda superior.',
+      hidden: ({ parent }) => !parent?.isBundle,
+      validation: (Rule) =>
+        Rule.custom((topProduct, context) => {
+          const parent = context.parent as { isBundle?: boolean };
+          if (parent?.isBundle && !topProduct) {
+            return 'Debes seleccionar la prenda superior para el producto receta.';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'bottomProduct',
+      title: 'Prenda Inferior (Short / Prenda Bottom)',
+      type: 'reference',
+      to: [{ type: 'product' }],
+      description: 'Selecciona el producto individual de la prenda inferior.',
+      hidden: ({ parent }) => !parent?.isBundle,
+      validation: (Rule) =>
+        Rule.custom((bottomProduct, context) => {
+          const parent = context.parent as { isBundle?: boolean };
+          if (parent?.isBundle && !bottomProduct) {
+            return 'Debes seleccionar la prenda inferior para el producto receta.';
+          }
+          return true;
+        }),
+    }),
     /* --- CAMBIO REALIZADO: Campo de Orden --- */
     defineField({
       name: 'order',
@@ -190,13 +229,15 @@ export default defineType({
     select: {
       title: 'name',
       subtitle: 'sku',
+      isBundle: 'isBundle',
       media: 'variants.0.images.0',
     },
     prepare(selection) {
-      const { title, subtitle, media } = selection;
+      const { title, subtitle, isBundle, media } = selection;
+      const bundleTag = isBundle ? ' 🍱 [Conjunto / Receta]' : '';
       return {
         title: title,
-        subtitle: subtitle ? `SKU: ${subtitle}` : 'Sin SKU',
+        subtitle: subtitle ? `SKU: ${subtitle}${bundleTag}` : (isBundle ? 'Conjunto / Receta' : 'Sin SKU'),
         media: media,
       };
     },

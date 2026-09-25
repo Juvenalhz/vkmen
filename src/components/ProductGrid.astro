@@ -1,45 +1,40 @@
 ---
 // src/components/ProductGrid.astro
-import { client, urlFor } from '../lib/sanity';
+import { client, urlFor, type Product, type Variant, type ReferencedProduct } from '../lib/sanity';
 import CatalogProductImage from './CatalogProductImage.astro';
 
-interface Variant {
-  colorName: string;
-  colorHex: string;
-  availableSizes: string[];
-  images: Array<{ 
-    asset: { 
-      url: string;
-      metadata?: {
-        dimensions?: {
-          aspectRatio?: number;
-          width?: number;
-          height?: number;
-        }
-      }
-    } 
-  }>;
-}
-
-interface Product {
-  sku: string;
-  name: string;
-  category: string; 
-  price: number;
-  isOnSale?: boolean;
-  offerPrice?: number;
-  variants: Variant[];
-}
-
-// 1. Extraemos los productos de Sanity en una sola petición
+// 1. Extraemos los productos de Sanity en una sola petición (incluyendo bundles / recetas)
 const dataQuery = `{
-  "products": *[_type == "product" && count(variants[defined(availableSizes) && count(availableSizes) > 0]) > 0] | order(orderRank asc) {
+  "products": *[_type == "product" && (
+    (!defined(isBundle) || isBundle == false) && count(variants[defined(availableSizes) && count(availableSizes) > 0]) > 0
+    ||
+    (isBundle == true && defined(topProduct) && defined(bottomProduct))
+  )] | order(orderRank asc) {
     sku,
     name,
     category,
     price,
     isOnSale,
     offerPrice,
+    isBundle,
+    topProduct-> {
+      sku,
+      name,
+      category,
+      variants[defined(availableSizes) && count(availableSizes) > 0] {
+        colorName,
+        availableSizes
+      }
+    },
+    bottomProduct-> {
+      sku,
+      name,
+      category,
+      variants[defined(availableSizes) && count(availableSizes) > 0] {
+        colorName,
+        availableSizes
+      }
+    },
     variants[defined(availableSizes) && count(availableSizes) > 0] {
       colorName,
       "colorHex": hex.hex,
@@ -71,19 +66,44 @@ const currency = homeSettings?.currency || 'EUR';
 const currencySymbol = currency === 'USD' ? '$' : '€';
 const formatPrice = (price: number) => currency === 'USD' ? `$ ${price}` : `${price} €`;
 
-// Ordenar las tallas en el orden lógico (S, M, L, XL) globalmente para que afecte todo el frontend
-const sizeOrder = ['S', 'M', 'L', 'XL'];
+// Ordenar las tallas en el orden lógico (S, M, L, XL, XXL)
+const sizeOrder = ['S', 'M', 'L', 'XL', 'XXL'];
+const sortSizes = (sizes: string[] = []) => {
+  return [...sizes].sort((a, b) => {
+    const iA = sizeOrder.indexOf(a);
+    const iB = sizeOrder.indexOf(b);
+    if (iA !== -1 && iB !== -1) return iA - iB;
+    if (iA !== -1) return -1;
+    if (iB !== -1) return 1;
+    return a.localeCompare(b);
+  });
+};
+
+const getReferencedSizes = (refProd: ReferencedProduct | undefined, targetColorName?: string) => {
+  if (!refProd || !refProd.variants || !Array.isArray(refProd.variants) || refProd.variants.length === 0) return [];
+  
+  if (targetColorName) {
+    const matchedVar = refProd.variants.find(
+      (v: any) => v.colorName && v.colorName.trim().toLowerCase() === targetColorName.trim().toLowerCase()
+    );
+    if (matchedVar && Array.isArray(matchedVar.availableSizes) && matchedVar.availableSizes.length > 0) {
+      return sortSizes(matchedVar.availableSizes);
+    }
+  }
+  
+  const set = new Set<string>();
+  refProd.variants.forEach((v: any) => {
+    if (Array.isArray(v.availableSizes)) {
+      v.availableSizes.forEach((s: string) => set.add(s));
+    }
+  });
+  return sortSizes(Array.from(set));
+};
+
 products.forEach((product: Product) => {
   product.variants?.forEach((variant: Variant) => {
     if (Array.isArray(variant.availableSizes)) {
-      variant.availableSizes.sort((a, b) => {
-        const iA = sizeOrder.indexOf(a);
-        const iB = sizeOrder.indexOf(b);
-        if (iA !== -1 && iB !== -1) return iA - iB;
-        if (iA !== -1) return -1;
-        if (iB !== -1) return 1;
-        return a.localeCompare(b);
-      });
+      variant.availableSizes = sortSizes(variant.availableSizes);
     }
   });
 });
@@ -95,7 +115,6 @@ const vkmenIsotipo = storeSettings?.isotipo?.asset
 
 /**
  * Helper para generar URLs de imágenes 100% íntegras (SIN recorte de Sanity)
- * Mantiene la foto original completa en 4:5, 9:16, 4:3 o 1:1.
  */
 const getCatalogImages = (sanitySource: any) => {
   if (!sanitySource) {
@@ -106,9 +125,7 @@ const getCatalogImages = (sanitySource: any) => {
   }
 
   return {
-    // Capa Frontal: NUNCA recortar la imagen (fit('max') conserva la foto completa a 1200px en WebP)
     fg: urlFor(sanitySource).width(1200).fit('max').format('webp').url(),
-    // Capa Fondo: Blur ambiental ultraligero (~3KB)
     bg: urlFor(sanitySource).width(300).height(375).fit('crop').quality(50).format('webp').url()
   };
 };
@@ -176,6 +193,7 @@ const categories = [
 
   <div class="grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
     {products.map((product: Product, pIndex: number) => {
+      const isBundle = Boolean(product.isBundle && product.topProduct && product.bottomProduct);
       const defaultVariant = product.variants?.[0];
       const defaultSanityImg = defaultVariant?.images?.[0];
       const defaultImgUrls = getCatalogImages(defaultSanityImg);
@@ -183,6 +201,15 @@ const categories = [
       const isEffectiveOffer = Boolean(product.isOnSale && typeof product.offerPrice === 'number' && product.offerPrice < product.price);
       const discountPercent = isEffectiveOffer ? Math.round(((product.price - product.offerPrice!) / product.price) * 100) : 0;
       const effectivePrice = isEffectiveOffer ? product.offerPrice! : product.price;
+
+      const topLabel = product.topProduct?.name || 'Camisa';
+      const bottomLabel = product.bottomProduct?.name || 'Short';
+
+      const defaultTopSizes = isBundle ? getReferencedSizes(product.topProduct, defaultVariant?.colorName) : [];
+      const defaultBottomSizes = isBundle ? getReferencedSizes(product.bottomProduct, defaultVariant?.colorName) : [];
+      const defaultSizesDisplay = isBundle 
+        ? ((defaultTopSizes.length > 0 && defaultBottomSizes.length > 0) ? `Top: ${defaultTopSizes.join('·')} | Bot: ${defaultBottomSizes.join('·')}` : 'Agotado')
+        : ((defaultVariant && defaultVariant.availableSizes && Array.isArray(defaultVariant.availableSizes)) ? defaultVariant.availableSizes.join(' · ') : 'Agotado');
 
       const productDataJson = JSON.stringify({
         name: product.name,
@@ -195,14 +222,22 @@ const categories = [
         formattedPrice: formatPrice(effectivePrice),
         formattedOriginalPrice: isEffectiveOffer ? formatPrice(product.price) : null,
         currencySymbol,
+        isBundle,
+        topLabel,
+        bottomLabel,
         variants: (product.variants || []).map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
           const firstImgUrls = getCatalogImages(validImages[0]);
+
+          const topSizes = isBundle ? getReferencedSizes(product.topProduct, v.colorName) : [];
+          const bottomSizes = isBundle ? getReferencedSizes(product.bottomProduct, v.colorName) : [];
           
           return {
             colorName: v.colorName,
             colorHex: v.colorHex,
             availableSizes: v.availableSizes || [],
+            topSizes,
+            bottomSizes,
             fgUrl: firstImgUrls.fg,
             bgUrl: firstImgUrls.bg,
             thumb: firstImgUrls.fg,
@@ -219,7 +254,7 @@ const categories = [
           data-is-on-sale={isEffectiveOffer ? "true" : "false"}
           class="group bg-white flex flex-col justify-between"
         >
-          {/* Contenedor de Imagen con CatalogProductImage (100% Nítida, Completa, Sin Recorte) */}
+          {/* Contenedor de Imagen con CatalogProductImage */}
           <div data-open-modal data-product-info={productDataJson} class="cursor-pointer">
             <CatalogProductImage
               id={`prod-img-${pIndex}`}
@@ -233,6 +268,12 @@ const categories = [
                 <div class="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/85 text-[#d4af37] border border-[#d4af37]/70 backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-black tracking-wider uppercase shadow-md">
                   <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
                   <span>{discountPercent}% OFF</span>
+                </div>
+              )}
+
+              {isBundle && (
+                <div class="absolute top-3 right-3 z-20 flex items-center gap-1 bg-neutral-900/90 text-white border border-white/20 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] font-bold tracking-wider uppercase shadow-md">
+                  <span>🍱 CONJUNTO</span>
                 </div>
               )}
               
@@ -264,9 +305,12 @@ const categories = [
               {(product.variants || []).map((v: Variant, vIndex: number) => {
                 const swatchUrls = getCatalogImages(v.images?.[0]);
                 
-                const sizesString = (v && v.availableSizes && Array.isArray(v.availableSizes)) 
-                  ? v.availableSizes.join(' · ') 
-                  : 'Sin Tallas';
+                const topSizes = isBundle ? getReferencedSizes(product.topProduct, v.colorName) : [];
+                const bottomSizes = isBundle ? getReferencedSizes(product.bottomProduct, v.colorName) : [];
+
+                const sizesString = isBundle
+                  ? ((topSizes.length > 0 && bottomSizes.length > 0) ? `Top: ${topSizes.join('·')} | Bot: ${bottomSizes.join('·')}` : 'Agotado')
+                  : ((v && v.availableSizes && Array.isArray(v.availableSizes)) ? v.availableSizes.join(' · ') : 'Agotado');
 
                 return (
                   <button 
@@ -287,9 +331,7 @@ const categories = [
             </div>
             
             <span id={`prod-sizes-${pIndex}`} class="text-[9px] font-bold tracking-widest text-neutral-500 font-mono">
-              {(defaultVariant && defaultVariant.availableSizes && Array.isArray(defaultVariant.availableSizes)) 
-                ? defaultVariant.availableSizes.join(' · ') 
-                : 'Agotado'}
+              {defaultSizesDisplay}
             </span>
           </div>
 
@@ -621,6 +663,8 @@ const categories = [
   let activeProduct: any = null;
   let activeVariant: any = null;
   let activeSize: string = '';
+  let activeTopSize: string = '';
+  let activeBottomSize: string = '';
 
   openModalElements.forEach(element => {
     element.addEventListener('click', () => {
@@ -635,9 +679,19 @@ const categories = [
 
       activeProduct = JSON.parse(rawData);
       activeVariant = activeProduct.variants[activeIndex] || activeProduct.variants[0];
-      
-      const initialSizes = activeVariant?.availableSizes || [];
-      activeSize = initialSizes[0] || '';
+
+      if (activeProduct.isBundle) {
+        const topSizes = activeVariant?.topSizes || [];
+        const bottomSizes = activeVariant?.bottomSizes || [];
+        activeTopSize = topSizes[0] || '';
+        activeBottomSize = bottomSizes[0] || '';
+        activeSize = (topSizes.length > 0 && bottomSizes.length > 0)
+          ? `Conjunto: ${activeProduct.topLabel || 'Camisa'} ${activeTopSize} + ${activeProduct.bottomLabel || 'Short'} ${activeBottomSize}`
+          : '';
+      } else {
+        const initialSizes = activeVariant?.availableSizes || [];
+        activeSize = initialSizes[0] || '';
+      }
 
       const updateModalContent = async (variant: any) => {
         activeVariant = variant;
@@ -712,33 +766,160 @@ const categories = [
 
         if (modalSizesContainer) {
           modalSizesContainer.innerHTML = '';
-          const sizesList = variant?.availableSizes || [];
-          if (!sizesList.includes(activeSize)) {
-            activeSize = sizesList[0] || '';
-          }
 
-          sizesList.forEach((size: string) => {
-            const sizeBtn = document.createElement('button');
-            sizeBtn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
-              size === activeSize 
-                ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm' 
-                : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
-            }`;
-            sizeBtn.textContent = size;
-            
-            sizeBtn.addEventListener('click', () => {
-              activeSize = size;
-              const allSizeBtns = modalSizesContainer.querySelectorAll('button');
-              allSizeBtns.forEach(b => {
-                b.classList.remove('border-neutral-900', 'bg-neutral-900', 'text-white');
-                b.classList.add('border-neutral-200', 'bg-neutral-50', 'text-neutral-700');
+          if (activeProduct.isBundle) {
+            const topSizes: string[] = variant?.topSizes || [];
+            const bottomSizes: string[] = variant?.bottomSizes || [];
+
+            if (topSizes.length === 0 || bottomSizes.length === 0) {
+              modalSizesContainer.innerHTML = `
+                <div class="w-full bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 rounded-md font-medium">
+                  ⚠️ Este conjunto no tiene stock disponible en este color.
+                </div>
+              `;
+              if (addToCartBtn) {
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = 'Agotado';
+                addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+              }
+              return;
+            }
+
+            if (!topSizes.includes(activeTopSize)) activeTopSize = topSizes[0] || '';
+            if (!bottomSizes.includes(activeBottomSize)) activeBottomSize = bottomSizes[0] || '';
+
+            const updateCombinedSize = () => {
+              activeSize = `Conjunto: ${activeProduct.topLabel || 'Camisa'} ${activeTopSize} + ${activeProduct.bottomLabel || 'Short'} ${activeBottomSize}`;
+              const summaryEl = document.getElementById('bundle-size-summary');
+              if (summaryEl) {
+                summaryEl.textContent = activeSize;
+              }
+            };
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full space-y-4';
+
+            // Caja de Resumen Elegido
+            const summaryBadge = document.createElement('div');
+            summaryBadge.className = 'bg-neutral-100 border border-neutral-200 rounded-md p-3 text-xs font-mono font-bold text-neutral-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1';
+            summaryBadge.innerHTML = `
+              <span class="text-[10px] text-neutral-500 uppercase tracking-widest">Combinación Elegida:</span>
+              <span id="bundle-size-summary" class="text-neutral-900 font-extrabold text-xs"></span>
+            `;
+            wrapper.appendChild(summaryBadge);
+
+            // Bloque Prenda Superior
+            const topSection = document.createElement('div');
+            topSection.className = 'space-y-1.5';
+            topSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">1. Talla Superior (${activeProduct.topLabel || 'Camisa'})</p>`;
+            const topBtnsDiv = document.createElement('div');
+            topBtnsDiv.className = 'flex flex-wrap gap-2';
+
+            topSizes.forEach((sizeStr: string) => {
+              const btn = document.createElement('button');
+              btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                sizeStr === activeTopSize
+                  ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+              }`;
+              btn.textContent = sizeStr;
+              btn.addEventListener('click', () => {
+                activeTopSize = sizeStr;
+                topBtnsDiv.querySelectorAll('button').forEach(b => {
+                  b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                });
+                btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+                updateCombinedSize();
               });
-              sizeBtn.classList.remove('border-neutral-200', 'bg-neutral-50', 'text-neutral-700');
-              sizeBtn.classList.add('border-neutral-900', 'bg-neutral-900', 'text-white');
+              topBtnsDiv.appendChild(btn);
+            });
+            topSection.appendChild(topBtnsDiv);
+            wrapper.appendChild(topSection);
+
+            // Bloque Prenda Inferior
+            const bottomSection = document.createElement('div');
+            bottomSection.className = 'space-y-1.5';
+            bottomSection.innerHTML = `<p class="text-[10px] font-bold tracking-widest text-neutral-600 uppercase">2. Talla Inferior (${activeProduct.bottomLabel || 'Short'})</p>`;
+            const bottomBtnsDiv = document.createElement('div');
+            bottomBtnsDiv.className = 'flex flex-wrap gap-2';
+
+            bottomSizes.forEach((sizeStr: string) => {
+              const btn = document.createElement('button');
+              btn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                sizeStr === activeBottomSize
+                  ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+              }`;
+              btn.textContent = sizeStr;
+              btn.addEventListener('click', () => {
+                activeBottomSize = sizeStr;
+                bottomBtnsDiv.querySelectorAll('button').forEach(b => {
+                  b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                });
+                btn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+                updateCombinedSize();
+              });
+              bottomBtnsDiv.appendChild(btn);
+            });
+            bottomSection.appendChild(bottomBtnsDiv);
+            wrapper.appendChild(bottomSection);
+
+            modalSizesContainer.appendChild(wrapper);
+            updateCombinedSize();
+
+            if (addToCartBtn) {
+              addToCartBtn.disabled = false;
+              addToCartBtn.textContent = 'Añadir al Carrito';
+              addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+          } else {
+            // Producto Estándar Individual
+            const sizesList = variant?.availableSizes || [];
+            if (sizesList.length === 0) {
+              modalSizesContainer.innerHTML = `
+                <div class="w-full bg-neutral-100 text-neutral-500 text-xs px-4 py-2 rounded-md font-mono">
+                  Producto Agotado
+                </div>
+              `;
+              if (addToCartBtn) {
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = 'Agotado';
+                addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+              }
+              return;
+            }
+
+            if (!sizesList.includes(activeSize)) {
+              activeSize = sizesList[0] || '';
+            }
+
+            sizesList.forEach((size: string) => {
+              const sizeBtn = document.createElement('button');
+              sizeBtn.className = `border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none ${
+                size === activeSize 
+                  ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm' 
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+              }`;
+              sizeBtn.textContent = size;
+              
+              sizeBtn.addEventListener('click', () => {
+                activeSize = size;
+                const allSizeBtns = modalSizesContainer.querySelectorAll('button');
+                allSizeBtns.forEach(b => {
+                  b.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400';
+                });
+                sizeBtn.className = 'border px-4 py-2 text-xs font-mono font-bold transition-all cursor-pointer focus:outline-none border-neutral-900 bg-neutral-900 text-white shadow-sm';
+              });
+
+              modalSizesContainer.appendChild(sizeBtn);
             });
 
-            modalSizesContainer.appendChild(sizeBtn);
-          });
+            if (addToCartBtn) {
+              addToCartBtn.disabled = false;
+              addToCartBtn.textContent = 'Añadir al Carrito';
+              addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+          }
         }
       };
 
