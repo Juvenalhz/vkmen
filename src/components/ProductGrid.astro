@@ -35,7 +35,7 @@ const dataQuery = `{
         availableSizes
       }
     },
-    variants[defined(availableSizes) && count(availableSizes) > 0] {
+    variants[] {
       colorName,
       "colorHex": hex.hex,
       availableSizes,
@@ -194,7 +194,15 @@ const categories = [
   <div class="grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
     {products.map((product: Product, pIndex: number) => {
       const isBundle = Boolean(product.isBundle && product.topProduct && product.bottomProduct);
-      const defaultVariant = product.variants?.[0];
+      
+      const productVariants = (product.variants || []).filter((v: Variant) => {
+        if (isBundle) {
+          return Boolean(v && v.colorName && v.images && v.images.length > 0);
+        }
+        return Boolean(v && Array.isArray(v.availableSizes) && v.availableSizes.length > 0);
+      });
+
+      const defaultVariant = productVariants[0] || product.variants?.[0];
       const defaultSanityImg = defaultVariant?.images?.[0];
       const defaultImgUrls = getCatalogImages(defaultSanityImg);
 
@@ -225,7 +233,7 @@ const categories = [
         isBundle,
         topLabel,
         bottomLabel,
-        variants: (product.variants || []).map((v: Variant) => {
+        variants: productVariants.map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
           const firstImgUrls = getCatalogImages(validImages[0]);
 
@@ -268,12 +276,6 @@ const categories = [
                 <div class="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/85 text-[#d4af37] border border-[#d4af37]/70 backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-black tracking-wider uppercase shadow-md">
                   <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
                   <span>{discountPercent}% OFF</span>
-                </div>
-              )}
-
-              {isBundle && (
-                <div class="absolute top-3 right-3 z-20 flex items-center gap-1 bg-neutral-900/90 text-white border border-white/20 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] font-bold tracking-wider uppercase shadow-md">
-                  <span>🍱 CONJUNTO</span>
                 </div>
               )}
               

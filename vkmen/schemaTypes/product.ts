@@ -177,6 +177,7 @@ export default defineType({
               title: 'Tallas Disponibles (Stock Activo)',
               type: 'array',
               description: 'Selecciona las tallas activas para este color en la tienda.',
+              hidden: ({ document }) => Boolean(document?.isBundle),
               of: [
                 {
                   type: 'string',
