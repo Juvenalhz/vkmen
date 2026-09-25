@@ -68,7 +68,7 @@ const dataQuery = `{
   }
 }`;
 
-const { products, homeSettings, storeSettings } = await client.fetch(dataQuery);
+const { products: rawProducts, homeSettings, storeSettings } = await client.fetch(dataQuery);
 const currency = homeSettings?.currency || 'EUR';
 const currencySymbol = currency === 'USD' ? '$' : '€';
 const formatPrice = (price: number) => currency === 'USD' ? `$ ${price}` : `${price} €`;
@@ -107,13 +107,37 @@ const getReferencedSizes = (refProd: ReferencedProduct | undefined, targetColorN
   return sortSizes(Array.from(set));
 };
 
-products.forEach((product: Product) => {
-  product.variants?.forEach((variant: Variant) => {
-    if (Array.isArray(variant.availableSizes)) {
-      variant.availableSizes = sortSizes(variant.availableSizes);
-    }
-  });
-});
+// Helper para verificar si una variante tiene stock (soporta productos estándar y bundles)
+const isVariantInStock = (product: Product, variant: Variant) => {
+  if (!variant || !variant.colorName) return false;
+  const isBundle = Boolean(product.isBundle && product.topProduct && product.bottomProduct);
+  if (isBundle) {
+    const topSizes = getReferencedSizes(product.topProduct, variant.colorName);
+    const bottomSizes = getReferencedSizes(product.bottomProduct, variant.colorName);
+    return topSizes.length > 0 && bottomSizes.length > 0;
+  } else {
+    return Array.isArray(variant.availableSizes) && variant.availableSizes.length > 0;
+  }
+};
+
+// Filtrar productos para conservar únicamente aquellos con variantes que tengan stock disponible
+const products: Product[] = (rawProducts || [])
+  .map((product: Product) => {
+    product.variants?.forEach((variant: Variant) => {
+      if (Array.isArray(variant.availableSizes)) {
+        variant.availableSizes = sortSizes(variant.availableSizes);
+      }
+    });
+
+    const validVariants = (product.variants || []).filter((v: Variant) => isVariantInStock(product, v));
+    return {
+      ...product,
+      variants: validVariants
+    };
+  })
+  .filter((product: Product) => product.variants && product.variants.length > 0);
+
+
 
 // 2. Definimos el Isotipo de VKMEN como la imagen de respaldo global
 const vkmenIsotipo = storeSettings?.isotipo?.asset
