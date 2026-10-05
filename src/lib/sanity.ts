@@ -5,7 +5,7 @@ import imageUrlBuilder from '@sanity/image-url';
 export const client = createClient({
   projectId: 'jxemj9hs', // El ID de tu proyecto de Sanity
   dataset: import.meta.env.PUBLIC_SANITY_DATASET || 'production',
-  useCdn: import.meta.env.PROD, // true en producción, false en dev para ver cambios rápido sin caché
+  useCdn: false, // Siempre false para consultar inventario fresco en tiempo real
   apiVersion: '2026-05-21', // Fecha de hoy para congelar la API
 });
 

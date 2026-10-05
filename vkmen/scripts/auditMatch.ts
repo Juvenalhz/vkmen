@@ -73,8 +73,10 @@ async function main() {
     if (!sanitySkus.includes(excelSku)) {
       const excelRow = rows.find(r => r.SKU && r.SKU.trim() === excelSku && r.Tipo === 'Item');
       
-      // Ignorar si no hay unidades en inventario
-      const quantity = excelRow ? (parseInt(excelRow.Cantidad) || 0) : 0;
+      // Ignorar si no hay unidades netas en inventario (Cantidad menos defectos)
+      const rawQty = excelRow ? (parseInt(excelRow.Cantidad || excelRow.cantidad) || 0) : 0;
+      const defects = excelRow ? (parseInt(excelRow.defectos || excelRow.defecto || excelRow.Defectos || excelRow.Defecto) || 0) : 0;
+      const quantity = rawQty - defects;
       
       // Excluir bolsas, cajas y OC
       const name = excelRow ? (excelRow.Nombre || '').toLowerCase() : '';

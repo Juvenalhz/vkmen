@@ -96,6 +96,7 @@ const getReferencedSizes = (refProd: ReferencedProduct | undefined, targetColorN
     if (matchedVar && Array.isArray(matchedVar.availableSizes) && matchedVar.availableSizes.length > 0) {
       return sortSizes(matchedVar.availableSizes);
     }
+    return [];
   }
   
   const set = new Set<string>();

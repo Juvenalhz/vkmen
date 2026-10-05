@@ -44,6 +44,26 @@ async function main() {
   const inventoryBySku: Record<string, Record<string, string[]>> = {};
   let currentSku = '';
 
+  // Función auxiliar para obtener valores numéricos de columnas del Excel de forma flexible
+  function getNumberValue(row: Record<string, any>, ...possibleKeys: string[]): number {
+    for (const key of possibleKeys) {
+      if (row[key] !== undefined && row[key] !== null) {
+        const val = parseInt(row[key], 10);
+        if (!isNaN(val)) return val;
+      }
+    }
+    const rowKeys = Object.keys(row);
+    for (const targetKey of possibleKeys) {
+      const targetNorm = targetKey.toLowerCase().trim();
+      const foundKey = rowKeys.find((k) => k.toLowerCase().trim() === targetNorm);
+      if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+        const val = parseInt(row[foundKey], 10);
+        if (!isNaN(val)) return val;
+      }
+    }
+    return 0;
+  }
+
   for (const row of rows) {
     if (row.Tipo === 'Item' && row.SKU) {
       currentSku = row.SKU.trim();
@@ -69,9 +89,13 @@ async function main() {
           inventoryBySku[activeSku][colorStr] = [];
         }
         
-        // Agregar talla si hay inventario mayor a 0
-        const quantity = parseInt(row.Cantidad) || 0;
-        if (quantity > 0) {
+        // Calcular la cantidad real disponible (Cantidad menos defectos)
+        const rawQuantity = getNumberValue(row, 'Cantidad', 'cantidad', 'CANTIDAD');
+        const defects = getNumberValue(row, 'defectos', 'defecto', 'Defectos', 'Defecto', 'DEFECTOS', 'DEFECTO');
+        const availableQuantity = rawQuantity - defects;
+
+        // Agregar talla si hay inventario disponible mayor a 0
+        if (availableQuantity > 0) {
           if (!inventoryBySku[activeSku][colorStr].includes(sizeStr)) {
             inventoryBySku[activeSku][colorStr].push(sizeStr);
           }
