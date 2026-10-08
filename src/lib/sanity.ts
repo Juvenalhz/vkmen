@@ -25,7 +25,20 @@ export interface ReferencedProduct {
   offerPrice?: number;
   variants?: Array<{
     colorName: string;
+    colorHex?: string;
     availableSizes: string[];
+    images?: Array<{ 
+      asset: { 
+        url: string;
+        metadata?: {
+          dimensions?: {
+            aspectRatio?: number;
+            width?: number;
+            height?: number;
+          };
+        };
+      };
+    }>;
   }>;
 }
 

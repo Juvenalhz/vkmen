@@ -27,7 +27,20 @@ const dataQuery = `{
       offerPrice,
       variants[] {
         colorName,
-        availableSizes
+        "colorHex": hex.hex,
+        availableSizes,
+        images[] { 
+          asset->{ 
+            url,
+            metadata {
+              dimensions {
+                aspectRatio,
+                width,
+                height
+              }
+            }
+          } 
+        }
       }
     },
     bottomProduct-> {
@@ -39,7 +52,20 @@ const dataQuery = `{
       offerPrice,
       variants[] {
         colorName,
-        availableSizes
+        "colorHex": hex.hex,
+        availableSizes,
+        images[] { 
+          asset->{ 
+            url,
+            metadata {
+              dimensions {
+                aspectRatio,
+                width,
+                height
+              }
+            }
+          } 
+        }
       }
     },
     variants[] {
@@ -322,14 +348,36 @@ const categories = [
           name: topProd.name,
           price: topPrice,
           effectivePrice: topEffectivePrice,
-          formattedPrice: formatPrice(topEffectivePrice)
+          formattedPrice: formatPrice(topEffectivePrice),
+          variants: (topProd.variants || []).map((tv: any) => {
+            const validImages = (tv.images || []).filter((img: any) => img && img.asset);
+            return {
+              colorName: tv.colorName,
+              colorHex: tv.colorHex,
+              availableSizes: tv.availableSizes || [],
+              images: validImages.length > 0 
+                ? validImages.map((img: any) => urlFor(img).width(1200).fit('max').format('webp').url())
+                : []
+            };
+          })
         } : null,
         bottomProduct: bottomProd ? {
           sku: bottomProd.sku,
           name: bottomProd.name,
           price: bottomPrice,
           effectivePrice: bottomEffectivePrice,
-          formattedPrice: formatPrice(bottomEffectivePrice)
+          formattedPrice: formatPrice(bottomEffectivePrice),
+          variants: (bottomProd.variants || []).map((bv: any) => {
+            const validImages = (bv.images || []).filter((img: any) => img && img.asset);
+            return {
+              colorName: bv.colorName,
+              colorHex: bv.colorHex,
+              availableSizes: bv.availableSizes || [],
+              images: validImages.length > 0 
+                ? validImages.map((img: any) => urlFor(img).width(1200).fit('max').format('webp').url())
+                : []
+            };
+          })
         } : null,
         variants: productVariants.map((v: Variant) => {
           const validImages = (v.images || []).filter(img => img && img.asset);
@@ -809,6 +857,16 @@ const categories = [
             if (imgUrl && !imgUrl.includes('placeholder')) { const i = new Image(); i.src = imgUrl; }
           });
         });
+        product.topProduct?.variants?.forEach((v: any) => {
+          v.images?.forEach((imgUrl: string) => {
+            if (imgUrl && !imgUrl.includes('placeholder')) { const i = new Image(); i.src = imgUrl; }
+          });
+        });
+        product.bottomProduct?.variants?.forEach((v: any) => {
+          v.images?.forEach((imgUrl: string) => {
+            if (imgUrl && !imgUrl.includes('placeholder')) { const i = new Image(); i.src = imgUrl; }
+          });
+        });
       } catch (err) {}
     });
   };
@@ -990,26 +1048,51 @@ const categories = [
 
       const updateModalContent = async (variant: any) => {
         activeVariant = variant;
-        
+
+        let displayImages: string[] = [];
+        if (activeProduct.isBundle && activePurchaseMode === 'top' && activeProduct.topProduct?.variants) {
+          const matchedTopVar = activeProduct.topProduct.variants.find(
+            (tv: any) => tv.colorName && tv.colorName.trim().toLowerCase() === (variant?.colorName || '').trim().toLowerCase()
+          ) || activeProduct.topProduct.variants[0];
+
+          if (matchedTopVar && matchedTopVar.images && matchedTopVar.images.length > 0) {
+            displayImages = matchedTopVar.images;
+          }
+        } else if (activeProduct.isBundle && activePurchaseMode === 'bottom' && activeProduct.bottomProduct?.variants) {
+          const matchedBottomVar = activeProduct.bottomProduct.variants.find(
+            (bv: any) => bv.colorName && bv.colorName.trim().toLowerCase() === (variant?.colorName || '').trim().toLowerCase()
+          ) || activeProduct.bottomProduct.variants[0];
+
+          if (matchedBottomVar && matchedBottomVar.images && matchedBottomVar.images.length > 0) {
+            displayImages = matchedBottomVar.images;
+          }
+        }
+
+        if (!displayImages || displayImages.length === 0) {
+          displayImages = variant?.images && variant.images.length > 0 ? variant.images : [vkmenIsotipo];
+        }
+
+        const primaryImg = displayImages[0] || variant?.thumb || vkmenIsotipo;
+
         if (modalImg) {
-          if (variant?.thumb) modalImg.src = variant.thumb;
-          if (modalBgImg && (variant?.bgUrl || variant?.thumb)) {
-            modalBgImg.src = variant.bgUrl || variant.thumb;
+          modalImg.src = primaryImg;
+          if (modalBgImg) {
+            modalBgImg.src = primaryImg;
           }
           
-          if (variant?.images?.[0]) {
+          if (displayImages[0]) {
             const highResImage = new Image();
-            highResImage.src = variant.images[0];
+            highResImage.src = displayImages[0];
             try {
               await highResImage.decode();
               if (activeVariant === variant) {
-                modalImg.src = variant.images[0];
-                if (modalBgImg) modalBgImg.src = variant.bgUrl || variant.images[0];
+                modalImg.src = displayImages[0];
+                if (modalBgImg) modalBgImg.src = displayImages[0];
               }
             } catch (e) {
               if (activeVariant === variant) {
-                modalImg.src = variant.images[0];
-                if (modalBgImg) modalBgImg.src = variant.bgUrl || variant.images[0];
+                modalImg.src = displayImages[0];
+                if (modalBgImg) modalBgImg.src = displayImages[0];
               }
             }
           }
@@ -1017,11 +1100,11 @@ const categories = [
         
         if (modalThumbnailsContainer) {
           modalThumbnailsContainer.innerHTML = '';
-          if (variant?.images && variant.images.length > 1) {
+          if (displayImages && displayImages.length > 1) {
             modalThumbnailsContainer.classList.remove('hidden');
             modalThumbnailsContainer.classList.add('flex');
 
-            variant.images.forEach((imgUrl: string, idx: number) => {
+            displayImages.forEach((imgUrl: string, idx: number) => {
               const thumbBtn = document.createElement('button');
               thumbBtn.type = 'button';
               thumbBtn.className = `w-12 h-14 rounded-lg bg-white border overflow-hidden cursor-pointer flex-shrink-0 transition-all transform hover:scale-105 ${
