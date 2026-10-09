@@ -51,12 +51,22 @@ export default defineType({
     }),
     defineField({
       name: 'heroImage',
-      title: 'Imagen de Fondo del Hero',
+      title: 'Imagen de Fondo del Hero (Escritorio / Pantallas Grandes)',
       type: 'image',
+      description: 'Imagen horizontal optimizada para computadoras y laptops (Recomendado: 1920x1080 px).',
       options: {
         hotspot: true,
       },
-      validation: (Rule) => Rule.required().error('La imagen de fondo es obligatoria.'),
+      validation: (Rule) => Rule.required().error('La imagen de fondo de escritorio es obligatoria.'),
+    }),
+    defineField({
+      name: 'heroImageMobile',
+      title: 'Imagen de Fondo del Hero (Móvil / Teléfonos)',
+      type: 'image',
+      description: 'Imagen vertical exclusiva para teléfonos móviles (Recomendado: 1080x1920 px). Si no se sube, se usará la de escritorio.',
+      options: {
+        hotspot: true,
+      },
     }),
   ],
 });
