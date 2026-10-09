@@ -19,34 +19,30 @@ const fondoHero = homeData?.heroImageUrl
   id="hero"
   class="relative min-h-[90vh] md:min-h-screen w-full overflow-hidden bg-black flex flex-col justify-between pt-24 md:pt-32 pb-10 select-none"
 >
-  <!-- Fondo con Imagen e Incrustación de Degradados Oscuros -->
+  <!-- Fondo con Imagen e Incrustación de Degradados Nítidos -->
   <div class="absolute inset-0 z-0 h-full w-full">
     {
       fondoHero && (
         <img
           src={fondoHero}
           alt="VKMEN Hero"
-          class="h-full w-full object-cover object-center opacity-90 transition-transform duration-1000 ease-out"
+          class="h-full w-full object-cover object-center opacity-100 transition-transform duration-1000 ease-out"
           loading="eager"
         />
       )
     }
-    <!-- Superposición elegante: Oscuro en la izquierda/móvil para lectura perfecta -->
+    <!-- Zona Segura Oscura Superior para el Header y Logo (VK MEN) -->
     <div
-      class="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/30 z-10 hidden md:block"
-    >
-    </div>
-    <div
-      class="absolute inset-0 bg-gradient-to-b from-black/85 via-black/90 to-black/95 z-10 md:hidden"
+      class="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-10 pointer-events-none"
     >
     </div>
   </div>
 
   <div
-    class="container mx-auto px-4 sm:px-6 relative z-20 text-white my-auto w-full max-w-6xl"
+    class="container mx-auto px-4 sm:px-6 relative z-20 text-white mt-auto w-full max-w-6xl"
   >
-    <!-- CONTENEDOR DEL CARRUSEL DE SLIDES -->
-    <div id="hero-slider-container" class="relative overflow-hidden w-full">
+    <!-- CONTENEDOR DEL CARRUSEL DE SLIDES (Oculto temporalmente) -->
+    <div id="hero-slider-container" class="hidden relative overflow-hidden w-full">
       <div
         id="hero-track"
         class="flex transition-transform duration-700 ease-out w-full"
@@ -240,8 +236,8 @@ const fondoHero = homeData?.heroImageUrl
       </div>
     </div>
 
-    <!-- NAVEGACIÓN Y CONTROLES DEL CARRUSEL (PUNTOS E INDICADORES) -->
-    <div class="flex items-center justify-between max-w-3xl mb-6 pt-2">
+    <!-- NAVEGACIÓN Y CONTROLES DEL CARRUSEL (Oculto temporalmente) -->
+    <div class="hidden flex items-center justify-between max-w-3xl mb-6 pt-2">
       <div class="flex items-center gap-2" id="hero-dots">
         <button
           data-hero-dot="0"
@@ -314,9 +310,9 @@ const fondoHero = homeData?.heroImageUrl
       </div>
     </div>
 
-    <!-- Fila de Beneficios / Iconos -->
+    <!-- Fila de Beneficios / Iconos (Oculto temporalmente) -->
     <div
-      class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl pt-4 border-t border-white/10"
+      class="hidden grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl pt-4 border-t border-white/10"
       id="hero-features"
     >
       <!-- Delivery (Moto) -->
