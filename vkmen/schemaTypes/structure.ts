@@ -81,11 +81,11 @@ export const structure: StructureResolver = (S) =>
         ),
 
       S.listItem()
-        .title('Shorts')
+        .title('Shorts & Bermudas')
         .icon(() => '🩳')
         .child(
           S.documentList()
-            .title('Colección de Shorts')
+            .title('Colección de Shorts & Bermudas')
             .filter('_type == "product" && category == "shorts"')
         ),
 

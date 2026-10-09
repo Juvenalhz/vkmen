@@ -192,14 +192,22 @@ const getCatalogImages = (sanitySource: any) => {
 const rawCategories = products.map((p: any) => p.category).filter(Boolean);
 const uniqueCategories = [...new Set(rawCategories)];
 
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  'shorts': 'Shorts & Bermudas',
+};
+
 const categories = [
   { title: 'Todos', value: 'all', isSpecial: false },
   { title: 'Ofertas', value: 'ofertas', isSpecial: true },
-  ...uniqueCategories.map((cat: any) => ({
-    title: String(cat).split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-    value: String(cat),
-    isSpecial: false
-  }))
+  ...uniqueCategories.map((cat: any) => {
+    const strCat = String(cat);
+    const defaultTitle = strCat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return {
+      title: CATEGORY_DISPLAY_NAMES[strCat] || defaultTitle,
+      value: strCat,
+      isSpecial: false
+    };
+  })
 ];
 ---
 

@@ -80,7 +80,7 @@ export default defineType({
           { title: 'Camisas', value: 'camisas' },
           { title: 'T-Shirts', value: 't-shirts' },
           { title: 'Sweaters', value: 'sweaters' },
-          { title: 'Shorts', value: 'shorts' },
+          { title: 'Shorts & Bermudas', value: 'shorts' },
           { title: 'Jeans & Pantalones', value: 'jeans-pantalones' },
         ],
       },
