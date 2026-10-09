@@ -5,30 +5,38 @@ import { client, urlFor } from "../lib/sanity";
 const homeQuery = `*[_type == "homeSettings"][0] {
   heroSub,
   heroTitle,
-  "heroImageUrl": heroImage.asset->url
+  "heroImageUrl": heroImage.asset->url,
+  "heroImageMobileUrl": heroImageMobile.asset->url
 }`;
 
 const homeData = await client.fetch(homeQuery);
 
-const fondoHero = homeData?.heroImageUrl
+const fondoHeroDesktop = homeData?.heroImageUrl
   ? urlFor(homeData.heroImageUrl).width(1920).format("webp").url()
   : "";
+
+const fondoHeroMobile = homeData?.heroImageMobileUrl
+  ? urlFor(homeData.heroImageMobileUrl).width(1080).format("webp").url()
+  : fondoHeroDesktop;
 ---
 
 <section
   id="hero"
-  class="relative min-h-[90vh] md:min-h-0 md:h-auto w-full overflow-hidden bg-black flex flex-col justify-between md:justify-start pt-20 md:pt-0 pb-10 md:pb-0 select-none"
+  class="relative w-full h-auto overflow-hidden bg-black select-none pt-0 pb-0"
 >
-  <!-- Capa de Fotografía: En móvil en capa adaptada, en escritorio en flujo normal (w-full h-auto block) -->
-  <div class="absolute inset-x-0 bottom-0 top-20 z-0 flex items-center justify-center bg-black md:relative md:top-0 md:bottom-auto md:inset-x-auto md:z-auto md:w-full md:h-auto md:block">
+  <!-- Capa de Fotografía: Flujo normal en móvil y escritorio (block w-full h-auto max-w-none) -->
+  <div class="relative w-full h-auto block bg-black">
     {
-      fondoHero && (
-        <img
-          src={fondoHero}
-          alt="VKMEN Hero"
-          class="h-full w-full object-contain object-center opacity-100 md:block md:w-full md:h-auto md:max-w-none"
-          loading="eager"
-        />
+      fondoHeroDesktop && (
+        <picture class="block w-full h-auto max-w-none">
+          <source media="(min-width: 768px)" srcset={fondoHeroDesktop} />
+          <img
+            src={fondoHeroMobile}
+            alt="VKMEN Hero"
+            class="block w-full h-auto max-w-none opacity-100"
+            loading="eager"
+          />
+        </picture>
       )
     }
   </div>
