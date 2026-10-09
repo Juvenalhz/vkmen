@@ -13,7 +13,7 @@ const logoDeScroll = headerData?.logoScrollUrl
   : '';
 ---
 
-<header id="main-header" class="fixed top-0 w-full z-50 py-3 md:py-6 transition-all duration-300 bg-transparent">
+<header id="main-header" class="fixed top-0 w-full z-50 py-3 md:py-6 transition-all duration-300 bg-black/30 backdrop-blur-md">
   <div class="container mx-auto px-6 relative flex items-center justify-center">
     
     <!-- ÁREA DEL LOGO (Clicable para volver al inicio) -->
@@ -84,7 +84,7 @@ const logoDeScroll = headerData?.logoScrollUrl
     end: "50", 
     onLeave: () => {
       // Al bajar: se activa el fondo blanco minimalista
-      header.classList.remove('md:py-6', 'bg-transparent');
+      header.classList.remove('md:py-6', 'bg-black/30');
       header.classList.add('py-3', 'bg-white', 'shadow-md');
       
       logoText.classList.add('opacity-0', '-translate-y-2');
@@ -98,8 +98,8 @@ const logoDeScroll = headerData?.logoScrollUrl
       }
     },
     onEnterBack: () => {
-      // Al volver arriba: regresa a transparente
-      header.classList.add('md:py-6', 'bg-transparent');
+      // Al volver arriba: regresa a semi-transparente
+      header.classList.add('md:py-6', 'bg-black/30');
       header.classList.remove('py-3', 'bg-white', 'shadow-md');
       
       logoText.classList.remove('opacity-0', '-translate-y-2');
