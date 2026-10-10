@@ -24,7 +24,7 @@ const fondoHeroMobile = homeData?.heroImageMobileUrl
   id="hero"
   class="relative w-full h-auto overflow-hidden bg-black select-none pt-0 pb-0"
 >
-  <!-- Capa de Fotografía: Flujo normal en móvil y escritorio (block w-full h-auto max-w-none) -->
+  <!-- Capa de Fotografía: 100% de ancho continuo de borde a borde (block w-full h-auto max-w-none) -->
   <div class="relative w-full h-auto block bg-black">
     {
       fondoHeroDesktop && (
@@ -39,10 +39,33 @@ const fondoHeroMobile = homeData?.heroImageMobileUrl
         </picture>
       )
     }
+
+    <!-- Bloque Editorial Compacto "Nueva Colección" - Centrado al 80% de la altura visible inicial (80vh) -->
+    <div class="absolute top-[80vh] -translate-y-1/2 inset-x-0 z-20 w-full px-4 text-center select-none pointer-events-auto">
+      <div class="max-w-xl mx-auto flex flex-col items-center justify-center space-y-[12px]">
+        
+        <!-- Título "NUEVA COLECCIÓN" en Tipografía del Logo VK MEN (Playfair Display) -->
+        <h1 class="font-heading text-base sm:text-xl md:text-[26px] font-normal tracking-[0.2em] uppercase text-neutral-100 drop-shadow-lg">
+          Nueva Colección
+        </h1>
+
+        <!-- Botón Transparente Editorial con Borde Blanco Fino y 12px de separación -->
+        <div>
+          <a
+            href="#catalogo"
+            id="hero-campaign-btn"
+            class="inline-flex items-center justify-center border border-white/40 hover:border-white text-white bg-transparent hover:bg-white/10 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-[0.25em] h-[38px] sm:h-[40px] px-6 sm:px-8 transition-all duration-300 cursor-pointer shadow-md"
+          >
+            Explorar Colección &rarr;
+          </a>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <div
-    class="container mx-auto px-4 sm:px-6 relative z-20 text-white mt-auto w-full max-w-6xl"
+    class="hidden container mx-auto px-4 sm:px-6 relative z-20 text-white mt-auto w-full max-w-6xl"
   >
     <!-- CONTENEDOR DEL CARRUSEL DE SLIDES (Oculto temporalmente) -->
     <div id="hero-slider-container" class="hidden relative overflow-hidden w-full">
