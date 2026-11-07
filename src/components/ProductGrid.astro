@@ -87,7 +87,15 @@ const dataQuery = `{
     }
   },
   "homeSettings": *[_type == "homeSettings"][0] {
-    currency
+    currency,
+    upcomingOfferTitle,
+    upcomingOfferSubtitle,
+    showUpcomingCountdown,
+    upcomingOfferDate,
+    showUpcomingTeaserBanner,
+    upcomingOfferBadge,
+    forceShowUpcomingOffers,
+    "upcomingOfferBgUrl": upcomingOfferBgImage.asset->url
   },
   "storeSettings": *[_type == "siteSettings"][0] {
     isotipo { asset->{ url } }
@@ -98,6 +106,16 @@ const { products: rawProducts, homeSettings, storeSettings } = await client.fetc
 const currency = homeSettings?.currency || 'EUR';
 const currencySymbol = currency === 'USD' ? '$' : '€';
 const formatPrice = (price: number) => currency === 'USD' ? `$ ${price}` : `${price} €`;
+
+// Configuración de Ofertas Próximas y Cuenta Regresiva desde Sanity
+const upcomingTitle = homeSettings?.upcomingOfferTitle || 'PRÓXIMAMENTE BLACK FRIDAY';
+const upcomingSubtitle = homeSettings?.upcomingOfferSubtitle || 'Prepárate para nuestra mayor venta de la temporada. Descuentos exclusivos y piezas seleccionadas por tiempo limitado.';
+const showUpcomingCountdown = Boolean(homeSettings?.showUpcomingCountdown);
+const upcomingDate = homeSettings?.upcomingOfferDate || '2026-11-27T00:00:00.000Z';
+const showUpcomingTeaserBanner = Boolean(homeSettings?.showUpcomingTeaserBanner);
+const upcomingBadge = homeSettings?.upcomingOfferBadge || 'EDICIÓN ESPECIAL';
+const upcomingBgUrl = homeSettings?.upcomingOfferBgUrl || '';
+const forceShowUpcomingOffers = Boolean(homeSettings?.forceShowUpcomingOffers);
 
 // Ordenar las tallas en el orden lógico (S, M, L, XL, XXL)
 const sizeOrder = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -166,9 +184,9 @@ const products: Product[] = (rawProducts || [])
 
 
 
-// 2. Definimos el Isotipo de VKMEN como la imagen de respaldo global
+// 2. Definimos el Isotipo de VKMEN como la imagen de respaldo global (proporción 4:5 exacta)
 const vkmenIsotipo = storeSettings?.isotipo?.asset
-  ? urlFor(storeSettings.isotipo).width(600).height(800).fit('fill').bg('FFFFFF').format('webp').url()
+  ? urlFor(storeSettings.isotipo).width(600).height(750).fit('fill').bg('FFFFFF').format('webp').url()
   : '/placeholder.jpg'; 
 
 /**
@@ -289,6 +307,38 @@ const categories = [
         </svg>
       </div>
     </div>
+
+    <!-- Banner Informativo de Anticipación (Controlado con interruptor en Sanity) -->
+    {(showUpcomingTeaserBanner && (!products.some(p => p.isOnSale && typeof p.offerPrice === 'number' && p.offerPrice < p.price) || forceShowUpcomingOffers)) && (
+      <div 
+        id="upcoming-offers-teaser-banner"
+        class="flex items-center justify-between gap-4 bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 border border-[#d4af37]/40 hover:border-[#d4af37] rounded-2xl px-5 py-3.5 shadow-xl transition-all duration-300 cursor-pointer group"
+        title="Ver anuncio de próximas ofertas"
+      >
+        <div class="flex items-center gap-3">
+          <span class="relative flex h-2.5 w-2.5 shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#d4af37]"></span>
+          </span>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-left">
+            <span class="font-heading text-xs sm:text-sm uppercase tracking-[0.18em] text-[#d4af37] font-semibold">
+              {upcomingTitle}
+            </span>
+            <span class="hidden md:inline text-white/30">•</span>
+            <span class="text-[11px] text-neutral-300 font-light truncate max-w-md hidden sm:inline">
+              {showUpcomingCountdown ? 'Cuenta regresiva activa para descuentos exclusivos' : 'Edición especial de descuentos próximamente'}
+            </span>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] group-hover:text-white transition-colors flex items-center gap-1 font-bold">
+            <span>{showUpcomingCountdown ? 'Ver Cuenta Regresiva' : 'Ver Detalles'}</span>
+            <span class="transform group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </span>
+        </div>
+      </div>
+    )}
   </div>
 
   <div class="grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
@@ -519,23 +569,143 @@ const categories = [
         Limpiar Búsqueda
       </button>
     </div>
+
+    <!-- Sección de Lujo: Próximas Ofertas & Cuenta Regresiva (Black Friday) -->
+    <div 
+      id="upcoming-offers-view"
+      data-target-date={upcomingDate}
+      data-force-show={forceShowUpcomingOffers ? "true" : "false"}
+      data-has-offers={products.some(p => p.isOnSale && typeof p.offerPrice === 'number' && p.offerPrice < p.price) ? "true" : "false"}
+      class="hidden col-span-full w-full py-6 md:py-12 flex-col items-center justify-center select-none"
+    >
+      <div class="relative w-full max-w-4xl mx-auto overflow-hidden rounded-3xl bg-neutral-950 border border-[#d4af37]/35 shadow-2xl p-6 sm:p-10 md:p-14 text-center">
+        
+        <!-- Efectos Ambientales de Fondo (Luz Dorada Difusa) -->
+        <div class="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-[#d4af37]/15 blur-[100px] pointer-events-none"></div>
+        <div class="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-[#d4af37]/15 blur-[100px] pointer-events-none"></div>
+        {upcomingBgUrl && (
+          <div 
+            class="absolute inset-0 bg-cover bg-center opacity-25 pointer-events-none mix-blend-luminosity"
+            style={`background-image: url('${upcomingBgUrl}');`}
+          ></div>
+        )}
+        <div class="absolute inset-0 bg-radial from-transparent via-black/60 to-black pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col items-center">
+          
+          <!-- Badge Superior con Ping Dorado -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-[#d4af37]/40 backdrop-blur-md mb-6 shadow-sm">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-[#d4af37]"></span>
+            </span>
+            <span class="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.3em] text-[#d4af37] font-bold">
+              {upcomingBadge}
+            </span>
+          </div>
+
+          <!-- TÍTULO EDITABLE EN SANITY CON LA TIPOGRAFÍA DEL LOGO (Playfair Display) -->
+          <h2 class="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-[0.18em] uppercase text-white drop-shadow-xl leading-tight max-w-3xl">
+            {upcomingTitle}
+          </h2>
+
+          <!-- Subtítulo Informativo -->
+          <p class="font-body text-xs sm:text-sm md:text-base text-neutral-300 font-light max-w-xl mx-auto mt-4 sm:mt-5 leading-relaxed tracking-wider">
+            {upcomingSubtitle}
+          </p>
+
+          <!-- Contador Hacia Atrás (Opcional, configurable desde Sanity) -->
+          {showUpcomingCountdown && (
+            <div class="my-8 sm:my-10 w-full max-w-2xl">
+              <div class="grid grid-cols-4 gap-2 sm:gap-4 md:gap-6">
+                
+                <!-- DÍAS -->
+                <div class="flex flex-col items-center justify-center p-3 sm:p-5 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-md shadow-xl group hover:border-[#d4af37]/50 transition-colors">
+                  <span id="countdown-days" class="font-heading text-3xl sm:text-5xl md:text-6xl font-normal text-white tracking-tight tabular-nums drop-shadow-md">
+                    00
+                  </span>
+                  <span class="text-[8px] sm:text-[10px] font-mono uppercase tracking-[0.25em] text-[#d4af37] font-semibold mt-2">
+                    Días
+                  </span>
+                </div>
+
+                <!-- HORAS -->
+                <div class="flex flex-col items-center justify-center p-3 sm:p-5 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-md shadow-xl group hover:border-[#d4af37]/50 transition-colors">
+                  <span id="countdown-hours" class="font-heading text-3xl sm:text-5xl md:text-6xl font-normal text-white tracking-tight tabular-nums drop-shadow-md">
+                    00
+                  </span>
+                  <span class="text-[8px] sm:text-[10px] font-mono uppercase tracking-[0.25em] text-[#d4af37] font-semibold mt-2">
+                    Horas
+                  </span>
+                </div>
+
+                <!-- MINUTOS -->
+                <div class="flex flex-col items-center justify-center p-3 sm:p-5 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-md shadow-xl group hover:border-[#d4af37]/50 transition-colors">
+                  <span id="countdown-minutes" class="font-heading text-3xl sm:text-5xl md:text-6xl font-normal text-white tracking-tight tabular-nums drop-shadow-md">
+                    00
+                  </span>
+                  <span class="text-[8px] sm:text-[10px] font-mono uppercase tracking-[0.25em] text-[#d4af37] font-semibold mt-2">
+                    Minutos
+                  </span>
+                </div>
+
+                <!-- SEGUNDOS (Acento Dorado de Lujo) -->
+                <div class="flex flex-col items-center justify-center p-3 sm:p-5 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-md shadow-xl group hover:border-[#d4af37]/50 transition-colors">
+                  <span id="countdown-seconds" class="font-heading text-3xl sm:text-5xl md:text-6xl font-normal text-[#d4af37] tracking-tight tabular-nums drop-shadow-md">
+                    00
+                  </span>
+                  <span class="text-[8px] sm:text-[10px] font-mono uppercase tracking-[0.25em] text-white/70 font-semibold mt-2">
+                    Segundos
+                  </span>
+                </div>
+
+              </div>
+
+              <!-- Mensaje de finalización si el contador llega a cero -->
+              <p id="countdown-finished-msg" class="hidden text-xs sm:text-sm font-heading tracking-widest text-[#d4af37] uppercase mt-5">
+                ¡El evento ha comenzado! Actualiza la página para disfrutar de las ofertas.
+              </p>
+            </div>
+          )}
+
+          <!-- Botón de Acción Editorial Minimalista -->
+          <div class="mt-8 flex items-center justify-center w-full">
+            <button
+              id="upcoming-back-to-catalog-btn"
+              type="button"
+              class="inline-flex items-center justify-center border border-white/40 hover:border-white text-white bg-transparent hover:bg-white/10 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.25em] h-[42px] px-8 sm:px-10 rounded-full transition-all duration-300 cursor-pointer shadow-md"
+            >
+              Explorar Colección General &rarr;
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de Detalle de Producto -->
   <div id="product-modal" data-lenis-prevent class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div id="product-modal-content" data-lenis-prevent tabindex="0" class="bg-white w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto rounded-none flex flex-col md:flex-row relative shadow-2xl overscroll-contain outline-none">
+    <div id="product-modal-content" data-lenis-prevent tabindex="0" class="bg-white w-full max-w-4xl max-h-[95vh] max-h-[95dvh] md:max-h-none overflow-y-auto md:overflow-hidden rounded-none flex flex-col md:flex-row relative shadow-2xl overscroll-contain outline-none">
       
-      <button id="close-modal" class="absolute top-4 right-4 z-20 p-2 text-neutral-400 hover:text-neutral-900 cursor-pointer bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none">
+      <button id="close-modal" class="absolute top-4 right-4 z-30 p-2 text-neutral-400 hover:text-neutral-900 cursor-pointer bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </button>
 
-      <!-- Visor de Imagen en Modal (Proporción 4:5 Completa) -->
-      <div id="modal-img-container" class="w-full md:w-1/2 bg-white flex flex-col justify-between border-b md:border-b-0 md:border-r border-neutral-100 transition-all duration-300">
-        <div class="w-full aspect-[4/5] overflow-hidden relative group/zoom bg-neutral-50">
-          <img id="modal-img" src="" alt="" class="w-full h-full object-cover object-top transition-all duration-300 cursor-zoom-in" style="transition: opacity 0.15s ease-in-out;">
-          <div class="absolute bottom-3 right-3 bg-black/40 text-white pointer-events-none p-1.5 rounded-full backdrop-blur-sm opacity-0 group-hover/zoom:opacity-100 transition-opacity">
+      <!-- Visor de Imagen en Modal (Proporción 4:5 idéntica al Grid Inicial, sin compresión vertical) -->
+      <div id="modal-img-container" class="modal-image-col w-full shrink-0 bg-neutral-900 border-b md:border-b-0 md:border-r border-neutral-100">
+        <div class="modal-image-frame w-full aspect-[4/5] shrink-0 overflow-hidden relative group/zoom bg-neutral-900 select-none">
+          <!-- Capa de fondo adaptativo idéntica a CatalogProductImage -->
+          <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <img id="modal-bg-img" src="" alt="" aria-hidden="true" class="block w-full h-full object-cover scale-125 filter blur-2xl opacity-60 brightness-95 pointer-events-none" />
+          </div>
+
+          <!-- Imagen principal 4:5 borde a borde sin recortar los pies del modelo -->
+          <img id="modal-img" src="" alt="" class="relative z-10 block w-full h-full object-cover object-top transition-all duration-300 cursor-zoom-in" style="transition: opacity 0.15s ease-in-out;">
+
+          <div class="absolute bottom-3 right-3 z-20 bg-black/40 text-white pointer-events-none p-1.5 rounded-full backdrop-blur-sm opacity-0 group-hover/zoom:opacity-100 transition-opacity">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637zM10.5 7.5v6m3-3h-6" />
             </svg>
@@ -546,35 +716,39 @@ const categories = [
         </div>
       </div>
 
-      <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between bg-white">
-        <div class="space-y-5">
-          <div>
-            <span id="modal-sku" class="text-[10px] font-mono tracking-widest text-neutral-400 uppercase"></span>
-            <h2 id="modal-title" class="text-xl font-light tracking-wide text-neutral-900 uppercase font-serif mt-1"></h2>
-            <p id="modal-price" class="text-lg font-bold text-neutral-900 mt-2"></p>
+      <div class="w-full md:flex-1 md:relative bg-white shrink-0">
+        <div data-lenis-prevent class="w-full md:absolute md:inset-0 md:overflow-y-auto overscroll-contain">
+          <div class="min-h-full p-6 md:p-8 flex flex-col justify-between bg-white">
+            <div class="space-y-5">
+              <div>
+                <span id="modal-sku" class="text-[10px] font-mono tracking-widest text-neutral-400 uppercase"></span>
+                <h2 id="modal-title" class="text-xl font-light tracking-wide text-neutral-900 uppercase font-serif mt-1"></h2>
+                <p id="modal-price" class="text-lg font-bold text-neutral-900 mt-2"></p>
+              </div>
+
+              <!-- Pestañas de Selección de Modo (Conjunto vs Piezas Individuales) -->
+              <div id="modal-bundle-mode-container" class="hidden"></div>
+
+              <div>
+                <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Color disponible</p>
+                <div id="modal-colors-container" class="flex gap-3"></div>
+              </div>
+
+              <div>
+                <p id="modal-sizes-label" class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Selecciona tu talla</p>
+                <div id="modal-sizes-container" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-2">
+              <button 
+                id="modal-add-to-cart-btn"
+                class="w-full block text-center bg-neutral-900 text-white text-xs font-semibold tracking-[0.2em] uppercase py-3.5 hover:bg-neutral-800 transition-all cursor-pointer disabled:opacity-50"
+              >
+                Añadir al Carrito
+              </button>
+            </div>
           </div>
-
-          <!-- Pestañas de Selección de Modo (Conjunto vs Piezas Individuales) -->
-          <div id="modal-bundle-mode-container" class="hidden"></div>
-
-          <div>
-            <p class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Color disponible</p>
-            <div id="modal-colors-container" class="flex gap-3"></div>
-          </div>
-
-          <div>
-            <p id="modal-sizes-label" class="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-2.5">Selecciona tu talla</p>
-            <div id="modal-sizes-container" class="flex flex-wrap gap-2"></div>
-          </div>
-        </div>
-
-        <div class="mt-6 pt-2">
-          <button 
-            id="modal-add-to-cart-btn"
-            class="w-full block text-center bg-neutral-900 text-white text-xs font-semibold tracking-[0.2em] uppercase py-3.5 hover:bg-neutral-800 transition-all cursor-pointer disabled:opacity-50"
-          >
-            Añadir al Carrito
-          </button>
         </div>
       </div>
 
@@ -582,14 +756,14 @@ const categories = [
   </div>
 
   <!-- Lightbox -->
-  <div id="image-lightbox" class="fixed inset-0 z-55 hidden items-center justify-center bg-black/95 backdrop-blur-md cursor-zoom-out select-none">
+  <div id="image-lightbox" class="fixed inset-0 z-55 hidden items-center justify-center p-4 bg-black/95 backdrop-blur-md cursor-zoom-out select-none">
     <button id="close-lightbox" class="absolute top-6 right-6 p-3 text-white/70 hover:text-white transition-colors cursor-pointer">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
       </svg>
     </button>
-    <div class="max-w-[95vw] max-h-[90vh] flex items-center justify-center">
-      <img id="lightbox-img" src="" alt="VKMEN Detalle Expandido" class="max-w-full max-h-[85vh] object-contain shadow-2xl transition-transform duration-300 ease-out">
+    <div class="max-w-[95vw] max-w-[95dvw] max-h-[90vh] max-h-[90dvh] flex items-center justify-center">
+      <img id="lightbox-img" src="" alt="VKMEN Detalle Expandido" class="block max-w-full max-h-[85vh] max-h-[88dvh] object-contain shadow-2xl transition-transform duration-300 ease-out">
     </div>
   </div>
 
@@ -613,6 +787,18 @@ const categories = [
 <style>
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .modal-image-frame {
+    aspect-ratio: 4 / 5;
+  }
+
+  @media (min-width: 768px) {
+    /* 72dvh de ancho * (5/4) = 90dvh de alto máximo, preservando siempre la proporción 4:5 exacta sin recortar */
+    .modal-image-col {
+      width: min(50%, 72vh);
+      width: min(50%, 72dvh);
+    }
+  }
 </style>
 
 <script>
@@ -655,6 +841,10 @@ const categories = [
   const offersActiveText = document.getElementById('offers-active-text');
   const clearOffersBtn = document.getElementById('clear-offers-mode-btn');
 
+  const upcomingView = document.getElementById('upcoming-offers-view');
+  const upcomingTeaserBanner = document.getElementById('upcoming-offers-teaser-banner');
+  const upcomingBackBtn = document.getElementById('upcoming-back-to-catalog-btn');
+
   const searchInput = document.getElementById('catalog-search-input') as HTMLInputElement | null;
   const clearSearchBtn = document.getElementById('clear-catalog-search-btn');
   const visibleCountEl = document.getElementById('catalog-visible-count');
@@ -685,23 +875,6 @@ const categories = [
       }
     });
 
-    if (offersActiveBanner) {
-      if (isOffersOnlyActive) {
-        offersActiveBanner.classList.remove('hidden');
-        offersActiveBanner.classList.add('flex');
-        if (offersActiveText) {
-          const activeBtnEl = document.querySelector(`[data-category-btn="${activeCategory}"]`);
-          const catTitle = activeCategory === 'all' 
-            ? 'Todos los productos' 
-            : (activeBtnEl?.textContent?.trim() || activeCategory);
-          offersActiveText.textContent = `Mostrando ofertas en ${catTitle}`;
-        }
-      } else {
-        offersActiveBanner.classList.remove('flex');
-        offersActiveBanner.classList.add('hidden');
-      }
-    }
-
     let visibleCount = 0;
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -726,8 +899,52 @@ const categories = [
       visibleCountEl.textContent = visibleCount.toString();
     }
 
+    // Comportamiento de la Cuenta Regresiva de Ofertas Próximas
+    const forceShow = upcomingView?.getAttribute('data-force-show') === 'true';
+    const hasGlobalOffers = upcomingView?.getAttribute('data-has-offers') === 'true';
+    const shouldShowUpcoming = isOffersOnlyActive && normalizedQuery.length === 0 && (forceShow || !hasGlobalOffers || visibleCount === 0);
+
+    if (upcomingView) {
+      if (shouldShowUpcoming) {
+        upcomingView.classList.remove('hidden');
+        upcomingView.classList.add('flex');
+      } else {
+        upcomingView.classList.remove('flex');
+        upcomingView.classList.add('hidden');
+      }
+    }
+
+    if (upcomingTeaserBanner) {
+      if (shouldShowUpcoming) {
+        upcomingTeaserBanner.classList.add('hidden');
+      } else {
+        upcomingTeaserBanner.classList.remove('hidden');
+      }
+    }
+
+    if (offersActiveBanner) {
+      if (isOffersOnlyActive) {
+        offersActiveBanner.classList.remove('hidden');
+        offersActiveBanner.classList.add('flex');
+        if (offersActiveText) {
+          if (shouldShowUpcoming) {
+            offersActiveText.textContent = `Próximamente Black Friday • Cuenta Regresiva Activa`;
+          } else {
+            const activeBtnEl = document.querySelector(`[data-category-btn="${activeCategory}"]`);
+            const catTitle = activeCategory === 'all' 
+              ? 'Todos los productos' 
+              : (activeBtnEl?.textContent?.trim() || activeCategory);
+            offersActiveText.textContent = `Mostrando ofertas en ${catTitle}`;
+          }
+        }
+      } else {
+        offersActiveBanner.classList.remove('flex');
+        offersActiveBanner.classList.add('hidden');
+      }
+    }
+
     if (noProductsFoundEl) {
-      if (visibleCount === 0) {
+      if (visibleCount === 0 && !shouldShowUpcoming) {
         noProductsFoundEl.classList.remove('hidden');
         noProductsFoundEl.classList.add('flex');
         if (searchQueryHighlight) {
@@ -788,6 +1005,79 @@ const categories = [
     isOffersOnlyActive = false;
     updateFilteringUI();
   });
+
+  upcomingBackBtn?.addEventListener('click', () => {
+    isOffersOnlyActive = false;
+    activeCategory = 'all';
+    updateFilteringUI();
+    const catalogoSection = document.querySelector('#catalogo');
+    if (catalogoSection) {
+      const headerOffset = 60;
+      const elementPosition = catalogoSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+  });
+
+  upcomingTeaserBanner?.addEventListener('click', () => {
+    isOffersOnlyActive = true;
+    updateFilteringUI();
+    const upcomingEl = document.getElementById('upcoming-offers-view');
+    if (upcomingEl) {
+      const headerOffset = 70;
+      const elementPosition = upcomingEl.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+  });
+
+  // --- 2.1 INICIALIZADOR DE CUENTA REGRESIVA EN VIVO ---
+  const initCountdown = () => {
+    const upcomingContainer = document.getElementById('upcoming-offers-view');
+    if (!upcomingContainer) return;
+
+    const daysEl = document.getElementById('countdown-days');
+    if (!daysEl) return; // Si la cuenta regresiva está apagada desde Sanity, salimos limpiamente
+
+    const rawTarget = upcomingContainer.getAttribute('data-target-date');
+    const targetDate = rawTarget ? new Date(rawTarget).getTime() : new Date('2026-11-27T00:00:00Z').getTime();
+
+    const hoursEl = document.getElementById('countdown-hours');
+    const minutesEl = document.getElementById('countdown-minutes');
+    const secondsEl = document.getElementById('countdown-seconds');
+    const finishedMsg = document.getElementById('countdown-finished-msg');
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const difference = targetDate - now;
+
+      if (isNaN(difference) || difference <= 0) {
+        if (daysEl) daysEl.textContent = '00';
+        if (hoursEl) hoursEl.textContent = '00';
+        if (minutesEl) minutesEl.textContent = '00';
+        if (secondsEl) secondsEl.textContent = '00';
+        if (finishedMsg) finishedMsg.classList.remove('hidden');
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      const pad = (n: number) => String(n).padStart(2, '0');
+
+      if (daysEl) daysEl.textContent = pad(days);
+      if (hoursEl) hoursEl.textContent = pad(hours);
+      if (minutesEl) minutesEl.textContent = pad(minutes);
+      if (secondsEl) secondsEl.textContent = pad(seconds);
+    };
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  };
+
+  initCountdown();
 
   updateFilteringUI();
 
@@ -1078,15 +1368,15 @@ const categories = [
         }
 
         if (!displayImages || displayImages.length === 0) {
-          displayImages = variant?.images && variant.images.length > 0 ? variant.images : [vkmenIsotipo];
+          displayImages = variant?.images && variant.images.length > 0 ? variant.images : ['/placeholder.jpg'];
         }
 
-        const primaryImg = displayImages[0] || variant?.thumb || vkmenIsotipo;
+        const primaryImg = displayImages[0] || variant?.thumb || '/placeholder.jpg';
 
         if (modalImg) {
           modalImg.src = primaryImg;
           if (modalBgImg) {
-            modalBgImg.src = primaryImg;
+            modalBgImg.src = (activePurchaseMode === 'full' && variant?.bgUrl) ? variant.bgUrl : primaryImg;
           }
           
           if (displayImages[0]) {
@@ -1096,12 +1386,12 @@ const categories = [
               await highResImage.decode();
               if (activeVariant === variant) {
                 modalImg.src = displayImages[0];
-                if (modalBgImg) modalBgImg.src = displayImages[0];
+                if (modalBgImg) modalBgImg.src = (activePurchaseMode === 'full' && variant?.bgUrl) ? variant.bgUrl : displayImages[0];
               }
             } catch (e) {
               if (activeVariant === variant) {
                 modalImg.src = displayImages[0];
-                if (modalBgImg) modalBgImg.src = displayImages[0];
+                if (modalBgImg) modalBgImg.src = (activePurchaseMode === 'full' && variant?.bgUrl) ? variant.bgUrl : displayImages[0];
               }
             }
           }
@@ -1116,13 +1406,13 @@ const categories = [
             displayImages.forEach((imgUrl: string, idx: number) => {
               const thumbBtn = document.createElement('button');
               thumbBtn.type = 'button';
-              thumbBtn.className = `w-12 h-14 rounded-lg bg-white border overflow-hidden cursor-pointer flex-shrink-0 transition-all transform hover:scale-105 ${
+              thumbBtn.className = `w-12 aspect-[4/5] rounded-lg bg-neutral-900 border overflow-hidden cursor-pointer shrink-0 transition-all transform hover:scale-105 ${
                 idx === 0 ? 'border-neutral-900 ring-2 ring-neutral-900/30 opacity-100 scale-105' : 'border-neutral-200 opacity-70 hover:opacity-100'
               }`;
               
               const thumbImg = document.createElement('img');
               thumbImg.src = imgUrl;
-              thumbImg.className = 'w-full h-full object-cover object-top';
+              thumbImg.className = 'block w-full h-full object-cover object-top';
               thumbBtn.appendChild(thumbImg);
               
               thumbBtn.addEventListener('click', async () => {
@@ -1137,9 +1427,9 @@ const categories = [
                 }
                 const allThumbs = modalThumbnailsContainer.querySelectorAll('button');
                 allThumbs.forEach(b => {
-                  b.className = 'w-12 h-14 rounded-lg bg-white border border-neutral-200 opacity-70 hover:opacity-100 overflow-hidden cursor-pointer flex-shrink-0 transition-all transform hover:scale-105';
+                  b.className = 'w-12 aspect-[4/5] rounded-lg bg-neutral-900 border border-neutral-200 opacity-70 hover:opacity-100 overflow-hidden cursor-pointer shrink-0 transition-all transform hover:scale-105';
                 });
-                thumbBtn.className = 'w-12 h-14 rounded-lg bg-white border border-neutral-900 ring-2 ring-neutral-900/30 opacity-100 scale-105 overflow-hidden cursor-pointer flex-shrink-0 transition-all transform';
+                thumbBtn.className = 'w-12 aspect-[4/5] rounded-lg bg-neutral-900 border border-neutral-900 ring-2 ring-neutral-900/30 opacity-100 scale-105 overflow-hidden cursor-pointer shrink-0 transition-all transform';
               });
 
               modalThumbnailsContainer.appendChild(thumbBtn);
@@ -1404,20 +1694,29 @@ const categories = [
     let itemName = activeProduct.name;
     let itemPrice = activeProduct.effectivePrice !== undefined ? activeProduct.effectivePrice : activeProduct.price;
     let itemSize = activeSize;
+    let itemImage = activeVariant.images?.[0] || '';
 
     if (activeProduct.isBundle) {
       if (activePurchaseMode === 'top') {
         const top = activeProduct.topProduct;
+        const matchedTopVar = top?.variants?.find(
+          (tv: any) => tv.colorName && tv.colorName.trim().toLowerCase() === (activeVariant?.colorName || '').trim().toLowerCase()
+        ) || top?.variants?.[0];
         itemSku = top?.sku || activeProduct.sku;
         itemName = top?.name || `${activeProduct.name} (${activeProduct.topLabel || 'Camisa'})`;
         itemPrice = top?.effectivePrice !== undefined ? top.effectivePrice : (top?.price || itemPrice);
         itemSize = activeTopSize;
+        if (matchedTopVar?.images?.[0]) itemImage = matchedTopVar.images[0];
       } else if (activePurchaseMode === 'bottom') {
         const bottom = activeProduct.bottomProduct;
+        const matchedBottomVar = bottom?.variants?.find(
+          (bv: any) => bv.colorName && bv.colorName.trim().toLowerCase() === (activeVariant?.colorName || '').trim().toLowerCase()
+        ) || bottom?.variants?.[0];
         itemSku = bottom?.sku || activeProduct.sku;
         itemName = bottom?.name || `${activeProduct.name} (${activeProduct.bottomLabel || 'Short'})`;
         itemPrice = bottom?.effectivePrice !== undefined ? bottom.effectivePrice : (bottom?.price || itemPrice);
         itemSize = activeBottomSize;
+        if (matchedBottomVar?.images?.[0]) itemImage = matchedBottomVar.images[0];
       }
     }
 
@@ -1428,7 +1727,7 @@ const categories = [
       colorName: activeVariant.colorName || 'Único',
       colorHex: activeVariant.colorHex || '#111827',
       size: itemSize,
-      image: activeVariant.images?.[0] || ''
+      image: itemImage
     });
 
     const originalText = addToCartBtn.textContent;
