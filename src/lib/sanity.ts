@@ -23,6 +23,8 @@ export interface ReferencedProduct {
   price?: number;
   isOnSale?: boolean;
   offerPrice?: number;
+  hasEventPrice?: boolean;
+  eventPrice?: number;
   variants?: Array<{
     colorName: string;
     colorHex?: string;
@@ -67,6 +69,8 @@ export interface Product {
   price: number;
   isOnSale?: boolean;
   offerPrice?: number;
+  hasEventPrice?: boolean;
+  eventPrice?: number;
   hideFromCatalog?: boolean;
   isBundle?: boolean;
   topProduct?: ReferencedProduct;

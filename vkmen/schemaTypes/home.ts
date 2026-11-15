@@ -69,7 +69,14 @@ export default defineType({
       },
     }),
 
-    // --- SECCIÓN: PRÓXIMAS OFERTAS (BLACK FRIDAY) ---
+    // --- SECCIÓN: PRECIOS DE EVENTO Y PRÓXIMAS OFERTAS ---
+    defineField({
+      name: 'enableEventPrices',
+      title: '¿Activar Precios de Evento en la Tienda? (Botón Global)',
+      type: 'boolean',
+      description: 'Cuando está ENCENDIDO, todos los productos que tengan "Precio Evento" configurado se mostrarán rebajados en la tienda (calculando el % de descuento siempre sobre su Precio Regular). Mientras esté APAGADO, los precios de evento permanecen ocultos y solo se verán las ofertas inmediatas normales.',
+      initialValue: false,
+    }),
     defineField({
       name: 'upcomingOfferTitle',
       title: 'Título del Evento / Próxima Oferta',

@@ -23,6 +23,24 @@ export const structure: StructureResolver = (S) =>
         .title('Todos los Productos')
         .icon(() => '📦'),
 
+      S.listItem()
+        .title('Productos con Precio Evento')
+        .icon(() => '🏷️')
+        .child(
+          S.documentList()
+            .title('Productos con Precio Evento Preparado')
+            .filter('_type == "product" && hasEventPrice == true')
+        ),
+
+      S.listItem()
+        .title('Productos en Oferta Inmediata')
+        .icon(() => '🔥')
+        .child(
+          S.documentList()
+            .title('Productos en Oferta Inmediata Activa')
+            .filter('_type == "product" && isOnSale == true')
+        ),
+
       S.divider(), // Otra línea divisoria
 
       // 3. CARPETAS AUTOMÁTICAS POR CATEGORÍA

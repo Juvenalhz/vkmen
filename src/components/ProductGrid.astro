@@ -16,6 +16,8 @@ const dataQuery = `{
     price,
     isOnSale,
     offerPrice,
+    hasEventPrice,
+    eventPrice,
     hideFromCatalog,
     isBundle,
     topProduct-> {
@@ -25,6 +27,8 @@ const dataQuery = `{
       price,
       isOnSale,
       offerPrice,
+      hasEventPrice,
+      eventPrice,
       variants[] {
         colorName,
         "colorHex": hex.hex,
@@ -50,6 +54,8 @@ const dataQuery = `{
       price,
       isOnSale,
       offerPrice,
+      hasEventPrice,
+      eventPrice,
       variants[] {
         colorName,
         "colorHex": hex.hex,
@@ -88,6 +94,7 @@ const dataQuery = `{
   },
   "homeSettings": *[_type == "homeSettings"][0] {
     currency,
+    enableEventPrices,
     upcomingOfferTitle,
     upcomingOfferSubtitle,
     showUpcomingCountdown,
@@ -107,7 +114,8 @@ const currency = homeSettings?.currency || 'EUR';
 const currencySymbol = currency === 'USD' ? '$' : '€';
 const formatPrice = (price: number) => currency === 'USD' ? `$ ${price}` : `${price} €`;
 
-// Configuración de Ofertas Próximas y Cuenta Regresiva desde Sanity
+// Configuración de Precios de Evento, Ofertas Próximas y Cuenta Regresiva desde Sanity
+const enableEventPrices = Boolean(homeSettings?.enableEventPrices);
 const upcomingTitle = homeSettings?.upcomingOfferTitle || 'PRÓXIMAMENTE BLACK FRIDAY';
 const upcomingSubtitle = homeSettings?.upcomingOfferSubtitle || 'Prepárate para nuestra mayor venta de la temporada. Descuentos exclusivos y piezas seleccionadas por tiempo limitado.';
 const showUpcomingCountdown = Boolean(homeSettings?.showUpcomingCountdown);
@@ -309,7 +317,7 @@ const categories = [
     </div>
 
     <!-- Banner Informativo de Anticipación (Controlado con interruptor en Sanity) -->
-    {(showUpcomingTeaserBanner && (!products.some(p => p.isOnSale && typeof p.offerPrice === 'number' && p.offerPrice < p.price) || forceShowUpcomingOffers)) && (
+    {(showUpcomingTeaserBanner && (!enableEventPrices || forceShowUpcomingOffers)) && (
       <div 
         id="upcoming-offers-teaser-banner"
         class="flex items-center justify-between gap-4 bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 border border-[#d4af37]/40 hover:border-[#d4af37] rounded-2xl px-5 py-3.5 shadow-xl transition-all duration-300 cursor-pointer group"
@@ -356,19 +364,32 @@ const categories = [
       const defaultSanityImg = defaultVariant?.images?.[0];
       const defaultImgUrls = getCatalogImages(defaultSanityImg);
 
-      const isEffectiveOffer = Boolean(product.isOnSale && typeof product.offerPrice === 'number' && product.offerPrice < product.price);
-      const discountPercent = isEffectiveOffer ? Math.round(((product.price - product.offerPrice!) / product.price) * 100) : 0;
-      const effectivePrice = isEffectiveOffer ? product.offerPrice! : product.price;
+      // Prioridad: Precio Evento (cuando el botón global está activo) > Precio en Oferta Inmediata > Precio Regular
+      // El % de descuento SIEMPRE se calcula en base al Precio Regular inicial (product.price)
+      const hasActiveEventOffer = Boolean(enableEventPrices && product.hasEventPrice && typeof product.eventPrice === 'number' && product.eventPrice < product.price);
+      const hasActiveRegularOffer = Boolean(product.isOnSale && typeof product.offerPrice === 'number' && product.offerPrice < product.price);
+      const activeOfferPrice = hasActiveEventOffer ? product.eventPrice! : (hasActiveRegularOffer ? product.offerPrice! : null);
+      const isEffectiveOffer = activeOfferPrice !== null;
+      const effectivePrice = isEffectiveOffer ? activeOfferPrice! : product.price;
+      const discountPercent = isEffectiveOffer ? Math.round(((product.price - effectivePrice) / product.price) * 100) : 0;
 
       const topProd = product.topProduct;
-      const topIsOffer = Boolean(topProd?.isOnSale && typeof topProd?.offerPrice === 'number' && topProd.offerPrice < (topProd.price || 0));
       const topPrice = topProd?.price || 0;
-      const topEffectivePrice = topIsOffer ? topProd!.offerPrice! : topPrice;
+      const topHasEventOffer = Boolean(enableEventPrices && topProd?.hasEventPrice && typeof topProd?.eventPrice === 'number' && topProd.eventPrice < topPrice);
+      const topHasRegularOffer = Boolean(topProd?.isOnSale && typeof topProd?.offerPrice === 'number' && topProd.offerPrice < topPrice);
+      const topActiveOfferPrice = topHasEventOffer ? topProd!.eventPrice! : (topHasRegularOffer ? topProd!.offerPrice! : null);
+      const topIsOffer = topActiveOfferPrice !== null;
+      const topEffectivePrice = topIsOffer ? topActiveOfferPrice! : topPrice;
+      const topDiscountPercent = (topIsOffer && topPrice > 0) ? Math.round(((topPrice - topEffectivePrice) / topPrice) * 100) : 0;
 
       const bottomProd = product.bottomProduct;
-      const bottomIsOffer = Boolean(bottomProd?.isOnSale && typeof bottomProd?.offerPrice === 'number' && bottomProd.offerPrice < (bottomProd.price || 0));
       const bottomPrice = bottomProd?.price || 0;
-      const bottomEffectivePrice = bottomIsOffer ? bottomProd!.offerPrice! : bottomPrice;
+      const bottomHasEventOffer = Boolean(enableEventPrices && bottomProd?.hasEventPrice && typeof bottomProd?.eventPrice === 'number' && bottomProd.eventPrice < bottomPrice);
+      const bottomHasRegularOffer = Boolean(bottomProd?.isOnSale && typeof bottomProd?.offerPrice === 'number' && bottomProd.offerPrice < bottomPrice);
+      const bottomActiveOfferPrice = bottomHasEventOffer ? bottomProd!.eventPrice! : (bottomHasRegularOffer ? bottomProd!.offerPrice! : null);
+      const bottomIsOffer = bottomActiveOfferPrice !== null;
+      const bottomEffectivePrice = bottomIsOffer ? bottomActiveOfferPrice! : bottomPrice;
+      const bottomDiscountPercent = (bottomIsOffer && bottomPrice > 0) ? Math.round(((bottomPrice - bottomEffectivePrice) / bottomPrice) * 100) : 0;
 
       const topLabel = product.topProduct?.name || 'Camisa';
       const bottomLabel = product.bottomProduct?.name || 'Short';
@@ -393,7 +414,7 @@ const categories = [
         sku: product.sku,
         price: product.price,
         isOnSale: isEffectiveOffer,
-        offerPrice: product.offerPrice || null,
+        offerPrice: activeOfferPrice,
         effectivePrice,
         discountPercent,
         formattedPrice: formatPrice(effectivePrice),
@@ -406,8 +427,11 @@ const categories = [
           sku: topProd.sku,
           name: topProd.name,
           price: topPrice,
+          isOnSale: topIsOffer,
           effectivePrice: topEffectivePrice,
+          discountPercent: topDiscountPercent,
           formattedPrice: formatPrice(topEffectivePrice),
+          formattedOriginalPrice: topIsOffer ? formatPrice(topPrice) : null,
           variants: (topProd.variants || []).map((tv: any) => {
             const validImages = (tv.images || []).filter((img: any) => img && img.asset);
             return {
@@ -424,8 +448,11 @@ const categories = [
           sku: bottomProd.sku,
           name: bottomProd.name,
           price: bottomPrice,
+          isOnSale: bottomIsOffer,
           effectivePrice: bottomEffectivePrice,
+          discountPercent: bottomDiscountPercent,
           formattedPrice: formatPrice(bottomEffectivePrice),
+          formattedOriginalPrice: bottomIsOffer ? formatPrice(bottomPrice) : null,
           variants: (bottomProd.variants || []).map((bv: any) => {
             const validImages = (bv.images || []).filter((img: any) => img && img.asset);
             return {
@@ -500,7 +527,7 @@ const categories = [
               {isEffectiveOffer ? (
                 <div class="flex flex-col items-end">
                   <span class="text-[10px] font-mono text-neutral-400 line-through leading-none">{formatPrice(product.price)}</span>
-                  <span class="text-xs font-black tracking-wider text-neutral-900 leading-tight mt-0.5">{formatPrice(product.offerPrice!)}</span>
+                  <span class="text-xs font-black tracking-wider text-neutral-900 leading-tight mt-0.5">{formatPrice(effectivePrice)}</span>
                 </div>
               ) : (
                 <p class="text-xs font-bold tracking-wider text-neutral-900">{formatPrice(product.price)}</p>
@@ -570,13 +597,15 @@ const categories = [
       </button>
     </div>
 
-    <!-- Sección de Lujo: Próximas Ofertas & Cuenta Regresiva (Black Friday) -->
+    <!-- Sección de Lujo: Próximas Ofertas & Cuenta Regresiva -->
     <div 
       id="upcoming-offers-view"
       data-target-date={upcomingDate}
       data-force-show={forceShowUpcomingOffers ? "true" : "false"}
-      data-has-offers={products.some(p => p.isOnSale && typeof p.offerPrice === 'number' && p.offerPrice < p.price) ? "true" : "false"}
-      class="hidden col-span-full w-full py-6 md:py-12 flex-col items-center justify-center select-none"
+      data-event-active={enableEventPrices ? "true" : "false"}
+      data-upcoming-announced={(showUpcomingCountdown || showUpcomingTeaserBanner) ? "true" : "false"}
+      data-has-offers={products.some(p => (enableEventPrices && p.hasEventPrice && typeof p.eventPrice === 'number' && p.eventPrice < p.price) || (p.isOnSale && typeof p.offerPrice === 'number' && p.offerPrice < p.price)) ? "true" : "false"}
+      class="hidden order-first col-span-full w-full py-4 md:py-8 flex-col items-center justify-center select-none"
     >
       <div class="relative w-full max-w-4xl mx-auto overflow-hidden rounded-3xl bg-neutral-950 border border-[#d4af37]/35 shadow-2xl p-6 sm:p-10 md:p-14 text-center">
         
@@ -679,6 +708,20 @@ const categories = [
             </button>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Separador Editorial cuando hay ofertas inmediatas activas junto con la cuenta regresiva del evento -->
+      <div id="upcoming-immediate-offers-divider" class="hidden w-full max-w-7xl mx-auto pt-10 pb-2 flex-col items-center justify-center">
+        <div class="flex items-center gap-4 w-full">
+          <div class="h-px bg-neutral-200 flex-1"></div>
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-900 text-[#d4af37] border border-[#d4af37]/40 shadow-xs">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37] animate-pulse"></span>
+            <span class="text-[10px] font-mono uppercase tracking-[0.25em] font-bold">
+              Ofertas Disponibles Hoy
+            </span>
+          </div>
+          <div class="h-px bg-neutral-200 flex-1"></div>
         </div>
       </div>
     </div>
@@ -842,6 +885,7 @@ const categories = [
   const clearOffersBtn = document.getElementById('clear-offers-mode-btn');
 
   const upcomingView = document.getElementById('upcoming-offers-view');
+  const upcomingImmediateDivider = document.getElementById('upcoming-immediate-offers-divider');
   const upcomingTeaserBanner = document.getElementById('upcoming-offers-teaser-banner');
   const upcomingBackBtn = document.getElementById('upcoming-back-to-catalog-btn');
 
@@ -899,10 +943,12 @@ const categories = [
       visibleCountEl.textContent = visibleCount.toString();
     }
 
-    // Comportamiento de la Cuenta Regresiva de Ofertas Próximas
+    // Comportamiento de la Cuenta Regresiva de Ofertas Próximas (convive con Ofertas Inmediatas cuando el evento aún no está activo)
     const forceShow = upcomingView?.getAttribute('data-force-show') === 'true';
+    const isEventActive = upcomingView?.getAttribute('data-event-active') === 'true';
+    const isUpcomingAnnounced = upcomingView?.getAttribute('data-upcoming-announced') === 'true';
     const hasGlobalOffers = upcomingView?.getAttribute('data-has-offers') === 'true';
-    const shouldShowUpcoming = isOffersOnlyActive && normalizedQuery.length === 0 && (forceShow || !hasGlobalOffers || visibleCount === 0);
+    const shouldShowUpcoming = isOffersOnlyActive && normalizedQuery.length === 0 && (forceShow || (!isEventActive && isUpcomingAnnounced) || !hasGlobalOffers || visibleCount === 0);
 
     if (upcomingView) {
       if (shouldShowUpcoming) {
@@ -911,6 +957,16 @@ const categories = [
       } else {
         upcomingView.classList.remove('flex');
         upcomingView.classList.add('hidden');
+      }
+    }
+
+    if (upcomingImmediateDivider) {
+      if (shouldShowUpcoming && visibleCount > 0) {
+        upcomingImmediateDivider.classList.remove('hidden');
+        upcomingImmediateDivider.classList.add('flex');
+      } else {
+        upcomingImmediateDivider.classList.remove('flex');
+        upcomingImmediateDivider.classList.add('hidden');
       }
     }
 
@@ -927,8 +983,10 @@ const categories = [
         offersActiveBanner.classList.remove('hidden');
         offersActiveBanner.classList.add('flex');
         if (offersActiveText) {
-          if (shouldShowUpcoming) {
-            offersActiveText.textContent = `Próximamente Black Friday • Cuenta Regresiva Activa`;
+          if (shouldShowUpcoming && visibleCount > 0) {
+            offersActiveText.textContent = `Próximo Evento • Mostrando también ofertas disponibles hoy (${visibleCount})`;
+          } else if (shouldShowUpcoming) {
+            offersActiveText.textContent = `Próximamente • Cuenta Regresiva Activa`;
           } else {
             const activeBtnEl = document.querySelector(`[data-category-btn="${activeCategory}"]`);
             const catTitle = activeCategory === 'all' 
@@ -1262,12 +1320,42 @@ const categories = [
             const top = activeProduct.topProduct;
             if (modalSku) modalSku.textContent = `SKU: ${top?.sku || activeProduct.sku}`;
             if (modalTitle) modalTitle.textContent = top?.name || activeProduct.topLabel || 'Prenda Superior';
-            if (modalPrice) modalPrice.textContent = top?.formattedPrice || activeProduct.formattedPrice;
+            if (modalPrice) {
+              if (top?.isOnSale) {
+                modalPrice.innerHTML = `
+                  <div class="flex items-center gap-3 mt-2">
+                    <span class="text-xl font-black text-neutral-900">${top.formattedPrice}</span>
+                    <span class="text-base font-mono text-neutral-400 line-through">${top.formattedOriginalPrice}</span>
+                    <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                      <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                      ${top.discountPercent}% OFF
+                    </span>
+                  </div>
+                `;
+              } else {
+                modalPrice.textContent = top?.formattedPrice || activeProduct.formattedPrice;
+              }
+            }
           } else if (activePurchaseMode === 'bottom') {
             const bottom = activeProduct.bottomProduct;
             if (modalSku) modalSku.textContent = `SKU: ${bottom?.sku || activeProduct.sku}`;
             if (modalTitle) modalTitle.textContent = bottom?.name || activeProduct.bottomLabel || 'Prenda Inferior';
-            if (modalPrice) modalPrice.textContent = bottom?.formattedPrice || activeProduct.formattedPrice;
+            if (modalPrice) {
+              if (bottom?.isOnSale) {
+                modalPrice.innerHTML = `
+                  <div class="flex items-center gap-3 mt-2">
+                    <span class="text-xl font-black text-neutral-900">${bottom.formattedPrice}</span>
+                    <span class="text-base font-mono text-neutral-400 line-through">${bottom.formattedOriginalPrice}</span>
+                    <span class="bg-black/85 border border-[#d4af37]/70 text-[#d4af37] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                      <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                      ${bottom.discountPercent}% OFF
+                    </span>
+                  </div>
+                `;
+              } else {
+                modalPrice.textContent = bottom?.formattedPrice || activeProduct.formattedPrice;
+              }
+            }
           }
         } else {
           if (modalSku) modalSku.textContent = `SKU: ${activeProduct.sku}`;

@@ -40,16 +40,16 @@ export default defineType({
     }),
     defineField({
       name: 'isOnSale',
-      title: '¿Producto en Oferta / Promoción?',
+      title: '¿Producto en Oferta / Promoción? (Inmediata)',
       type: 'boolean',
-      description: 'Activa este interruptor para aplicar un precio en oferta y destacar el producto con la etiqueta de descuento.',
+      description: 'Activa este interruptor para aplicar un precio en oferta que se verá inmediatamente en la tienda.',
       initialValue: false,
     }),
     defineField({
       name: 'offerPrice',
       title: 'Precio en Oferta ($ o €)',
       type: 'number',
-      description: 'Precio rebajado especial (debe ser menor al precio regular).',
+      description: 'Precio rebajado inmediato (debe ser menor al precio regular).',
       hidden: ({ parent }) => !parent?.isOnSale,
       validation: (Rule) =>
         Rule.custom((offerPrice, context) => {
@@ -62,6 +62,36 @@ export default defineType({
               return 'El precio en oferta debe ser menor al precio regular.';
             }
             if (offerPrice < 0) {
+              return 'El precio no puede ser negativo.';
+            }
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'hasEventPrice',
+      title: '¿Tiene Precio Evento?',
+      type: 'boolean',
+      description: 'Activa este interruptor para dejar preparado un precio especial de evento. No se mostrará en la página hasta que actives el botón global "Activar Precios de Evento" en Configuración General.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'eventPrice',
+      title: 'Precio Evento ($ o €)',
+      type: 'number',
+      description: 'Precio especial de evento (debe ser menor al Precio Regular). El % de descuento siempre se calculará en base al Precio Regular inicial.',
+      hidden: ({ parent }) => !parent?.hasEventPrice,
+      validation: (Rule) =>
+        Rule.custom((eventPrice, context) => {
+          const parent = context.parent as { hasEventPrice?: boolean; price?: number };
+          if (parent?.hasEventPrice) {
+            if (eventPrice === undefined || eventPrice === null) {
+              return 'Si el Precio Evento está activo, debes colocar el monto del Precio Evento.';
+            }
+            if (parent.price !== undefined && eventPrice >= parent.price) {
+              return 'El Precio Evento debe ser menor al Precio Regular.';
+            }
+            if (eventPrice < 0) {
               return 'El precio no puede ser negativo.';
             }
           }
@@ -238,14 +268,30 @@ export default defineType({
       title: 'name',
       subtitle: 'sku',
       isBundle: 'isBundle',
+      price: 'price',
+      isOnSale: 'isOnSale',
+      offerPrice: 'offerPrice',
+      hasEventPrice: 'hasEventPrice',
+      eventPrice: 'eventPrice',
       media: 'variants.0.images.0',
     },
     prepare(selection) {
-      const { title, subtitle, isBundle, media } = selection;
-      const bundleTag = isBundle ? ' 🍱 [Conjunto / Receta]' : '';
+      const { title, subtitle, isBundle, price, isOnSale, offerPrice, hasEventPrice, eventPrice, media } = selection;
+      const bundleTag = isBundle ? ' 🍱 [Conjunto]' : '';
+      const priceParts: string[] = [];
+      if (typeof price === 'number') {
+        priceParts.push(`Reg: ${price}`);
+      }
+      if (isOnSale && typeof offerPrice === 'number') {
+        priceParts.push(`🟢 Oferta: ${offerPrice}`);
+      }
+      if (hasEventPrice && typeof eventPrice === 'number') {
+        priceParts.push(`🏷️ Evento: ${eventPrice}`);
+      }
+      const priceInfo = priceParts.length > 0 ? ` • ${priceParts.join(' | ')}` : '';
       return {
         title: title,
-        subtitle: subtitle ? `SKU: ${subtitle}${bundleTag}` : (isBundle ? 'Conjunto / Receta' : 'Sin SKU'),
+        subtitle: subtitle ? `SKU: ${subtitle}${bundleTag}${priceInfo}` : (isBundle ? `Conjunto / Receta${priceInfo}` : `Sin SKU${priceInfo}`),
         media: media,
       };
     },
